@@ -18,8 +18,20 @@
   }
 </script>
 <style>
-  :root{ color-scheme: dark; }
+  :root{ color-scheme: dark; --sky-top:#0b2545; --sky-mid:#13315c; --sky-bot:#1d3461; }
   html,body{ -webkit-tap-highlight-color: transparent; overscroll-behavior:none; background:#0f172a; }
+  /* 생태계 상태에 따라 변하는 하늘 그라데이션 배경 */
+  .sky{ position:fixed; inset:0; z-index:0; pointer-events:none;
+    background: radial-gradient(120% 90% at 50% -10%, var(--sky-top) 0%, var(--sky-mid) 45%, var(--sky-bot) 100%);
+    transition: background 1.4s ease; }
+  /* 떠다니는 배경 입자 */
+  .particles{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .particle{ position:absolute; bottom:-12px; border-radius:9999px; animation: rise linear infinite; }
+  @keyframes rise  { 0%{ transform: translateY(20px); opacity:0 } 20%{opacity:.7} 100%{ transform: translateY(-110vh); opacity:0 } }
+  @keyframes floaty{ 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-10px) } }
+  @keyframes glowPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(52,211,153,0) } 50%{ box-shadow:0 0 28px 4px rgba(52,211,153,.4) } }
+  .floaty{ animation: floaty 5s ease-in-out infinite; }
+  .glow-pulse{ animation: glowPulse 2.6s ease-in-out infinite; }
   .glass-main { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
   .glass-soft { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 
@@ -43,6 +55,8 @@
 </head>
 <body class="font-sans text-slate-100 min-h-screen flex flex-col justify-between antialiased selection:bg-emerald-500/30">
 
+  <div id="skyLayer" class="sky"></div>
+  <div id="particles" class="particles"></div>
   <canvas id="endingCanvas" class="fixed inset-0 pointer-events-none z-40 hidden"></canvas>
 
   <div id="app-root" class="w-full max-w-md mx-auto min-h-screen flex flex-col p-4 relative z-10 transition-all duration-300">
@@ -84,7 +98,7 @@
     <section id="stage" class="flex-1 flex flex-col justify-center py-4"></section>
   </div>
 
-  <script src="data.js?v=2"></script>
-  <script src="main.js?v=2"></script>
+  <script src="data.js?v=5"></script>
+  <script src="main.js?v=5"></script>
 </body>
 </html>

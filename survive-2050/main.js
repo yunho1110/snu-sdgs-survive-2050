@@ -149,6 +149,34 @@ function updateBars(){
   if(bE) bE.style.width = clamp(s.eco, 2, 100)+'%';
 }
 
+/* ── 분위기 연출: 배경 입자 + 생태계 반영 하늘색 ── */
+function spawnParticles(mode){
+  const wrap = document.getElementById('particles'); if(!wrap) return;
+  wrap.innerHTML='';
+  for(let k=0;k<16;k++){
+    const s = 4 + Math.random()*10, p = document.createElement('span');
+    p.className = 'particle';
+    p.style.left = (Math.random()*100)+'%';
+    p.style.width = s+'px'; p.style.height = s+'px';
+    p.style.animationDuration = (6+Math.random()*8)+'s';
+    p.style.animationDelay = (-Math.random()*8)+'s';
+    p.style.background = mode==='smog' ? 'rgba(140,130,120,.30)'
+                       : mode==='eco'  ? 'rgba(160,230,200,.30)'
+                                       : 'rgba(120,170,220,.28)';
+    wrap.appendChild(p);
+  }
+}
+function setSky(top, mid, bot){
+  const r = document.documentElement.style;
+  r.setProperty('--sky-top', top); r.setProperty('--sky-mid', mid); r.setProperty('--sky-bot', bot);
+}
+function updateSky(){
+  const e = G ? G.stats.eco : START.eco;
+  if(e >= 66){ setSky('#0e7490','#0f766e','#14532d'); spawnParticles('eco'); }
+  else if(e >= 33){ setSky('#0b2545','#13315c','#1d3461'); spawnParticles('cool'); }
+  else { setSky('#3b2f2f','#4a3b2a','#5b3a29'); spawnParticles('smog'); }
+}
+
 /* ═══════════════ 5. 큐 생성 + 선택 처리 ═══════════════ */
 function sample(arr, n){
   const pool = arr.slice();
@@ -201,6 +229,7 @@ function choose(choiceIdx){
   rollNum('vSea',  old.sea,  G.stats.sea,  500, false);
   rollNum('vEco',  old.eco,  G.stats.eco,  500, false);
   updateBars();
+  if(Math.floor(old.eco/33) !== Math.floor(G.stats.eco/33)) updateSky();   // 생태 구간 바뀔 때만 하늘 갱신
 
   // 임계점 도달 시 화면 붕괴 연출
   const root = document.getElementById('app-root');
@@ -414,6 +443,7 @@ function renderFinalEndingPage(title, desc, color){
   const stage = document.getElementById('stage');
   document.getElementById('warn').className = 'hidden';
   document.getElementById('app-root').classList.remove('earthquake','glitch-red');
+  setSky(color, color+'88', '#0b1220'); spawnParticles(G.stats.eco<33?'smog':'eco');  // 엔딩 색에 맞춘 하늘
 
   // SDGs 성적표
   let report = '';
@@ -474,12 +504,21 @@ function screenIntro(){
         <div class="text-base mb-0.5">${ic}</div><div class="font-bold truncate">${nm}</div></div>`;
   }).join('');
 
+  G = null; updateSky();   // 인트로는 시원한 기본 하늘 + 입자
+  // 상단 지표를 시작값으로 리셋(직전 게임 잔상 제거)
+  document.getElementById('vTemp').innerText = START.temp.toFixed(2);
+  document.getElementById('vSea').innerText  = START.sea;
+  document.getElementById('vEco').innerText  = START.eco;
+  document.getElementById('bTemp').style.width = clamp((START.temp/4)*100,4,100)+'%';
+  document.getElementById('bSea').style.width  = clamp((START.sea/120)*100,2,100)+'%';
+  document.getElementById('bEco').style.width  = clamp(START.eco,2,100)+'%';
   const hasSave = !!readSave();
   stage.innerHTML = `
     <div class="glass-main p-6 rounded-2xl text-center shadow-xl animate-fade-in">
+      <div class="text-6xl floaty mb-2 drop-shadow-[0_10px_30px_rgba(16,185,129,.35)]">🌏</div>
       <h2 class="font-display text-3xl text-white mb-1">살려야 한다, 지구</h2>
       <p class="text-xs text-slate-400 mb-6">UN SDGs 기반 기후 통제 시뮬레이션 · 총 ${TOTAL_STAGES}단계</p>
-      <button id="startBtn" class="w-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black py-3.5 text-sm active:scale-95 transition shadow-xl mb-2.5">
+      <button id="startBtn" class="glow-pulse w-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black py-3.5 text-sm active:scale-95 transition shadow-xl mb-2.5">
         ▶ 통제실 입장 (새 게임)
       </button>
       ${hasSave?`<button id="resumeBtn" class="w-full rounded-full glass-soft border border-white/10 text-slate-200 font-bold py-3 text-sm active:scale-95 transition mb-6">💾 이어하기</button>`:'<div class="mb-6"></div>'}
@@ -496,8 +535,7 @@ function screenIntro(){
 }
 
 function startGame(){
-  G.stats = freshStats();
-  G.history = []; G.currentStep = 0; G.modifier = null; G.renderingHalted = false;
+  G = { stats: freshStats(), history: [], currentStep: 0, gameQueue: [], modifier: null, renderingHalted: false, rollTimers: [] };
   buildQueue();
   document.getElementById('warn').className = 'hidden';
   syncHUD(); saveGame();
@@ -535,9 +573,8 @@ function readSave(){
 function clearSave(){ try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} }
 function loadGame(){
   const saved = readSave(); if(!saved){ startGame(); return; }
-  G.currentStep = saved.currentStep; G.gameQueue = saved.gameQueue;
-  G.stats = saved.stats; G.history = saved.history;
-  G.modifier = null; G.renderingHalted = false;
+  G = { currentStep: saved.currentStep, gameQueue: saved.gameQueue, stats: saved.stats,
+        history: saved.history, modifier: null, renderingHalted: false, rollTimers: [] };
   syncHUD();
   renderCurrentScenario();
 }
@@ -546,6 +583,7 @@ function syncHUD(){
   document.getElementById('vSea').innerText  = Math.round(G.stats.sea);
   document.getElementById('vEco').innerText  = Math.round(G.stats.eco);
   updateBars();
+  updateSky();
 }
 
 /* ═══════════════ 부팅 ═══════════════ */
