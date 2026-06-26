@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "game", "runtimeExecutable": "python3", "runtimeArgs": ["-m","http.server","8777","--directory","game"], "port": 8777 },
+    { "name": "survive-2050", "runtimeExecutable": "python3", "runtimeArgs": ["-m","http.server","4173","--directory","survive-2050"], "port": 4173 }
+  ]
+}

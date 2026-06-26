@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>순천대 SDGs 어드벤처 — 캠퍼스 미션</title>
+<style>
+  :root{
+    --bg:#0f231c; --panel:#1a2438; --panel2:#232f47; --line:#3a4a6a;
+    --accent:#7be0a0; --accent2:#ffd86b; --text:#eafff3; --sub:#aebccf;
+    --e:#60a69b; --s:#ef8ba5; --g:#f0b96f;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;background:#7fc4e8;color:var(--text);
+    font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;overflow:hidden;}
+  canvas#cv{display:block;width:100%;height:100%;touch-action:none;image-rendering:pixelated;image-rendering:crisp-edges;}
+
+  .ui{position:fixed;z-index:20;}
+  #banner{top:14px;left:14px;background:#1a2438e8;border:2px solid #3a4a6a;border-radius:12px;
+    padding:11px 16px 11px 13px;display:flex;gap:11px;align-items:center;box-shadow:0 5px 18px #0006;backdrop-filter:blur(5px);}
+  #banner .flag{font-size:26px;} #banner b{font-size:15px;display:block;line-height:1.25;} #banner small{font-size:12px;color:var(--sub);}
+  #topright{top:14px;right:14px;display:flex;gap:7px;}
+  .iconbtn{pointer-events:auto;background:#1a2438e8;border:2px solid #3a4a6a;color:var(--text);border-radius:11px;width:42px;height:42px;
+    font-size:19px;cursor:pointer;box-shadow:0 4px 12px #0006;backdrop-filter:blur(5px);transition:transform .05s;}
+  .iconbtn:active{transform:scale(.9);}
+  #questPanel{top:66px;right:14px;width:248px;background:#1a2438e8;border:2px solid #3a4a6a;border-radius:13px;padding:12px 14px;box-shadow:0 5px 18px #0006;backdrop-filter:blur(5px);}
+  #questPanel h3{margin:0 0 9px;font-size:13px;color:var(--accent2);display:flex;align-items:center;gap:6px;}
+  .qline{font-size:12.5px;color:var(--text);margin:7px 0;display:flex;gap:7px;align-items:flex-start;line-height:1.4;}
+  .qline .ck{flex-shrink:0;width:16px;height:16px;border-radius:5px;border:1.5px solid #4a5a7a;display:inline-flex;align-items:center;justify-content:center;font-size:11px;margin-top:1px;}
+  .qline.done{color:var(--sub);} .qline.done .ck{background:var(--accent);border-color:var(--accent);color:#06281a;} .qline b{color:var(--accent);}
+  #chatbox{left:14px;bottom:14px;width:330px;background:#11192be8;border:2px solid #3a4a6a;border-radius:12px;box-shadow:0 5px 18px #0006;backdrop-filter:blur(5px);overflow:hidden;}
+  .chattabs{display:flex;border-bottom:1px solid #3a4a6a;} .chattabs div{padding:7px 14px;font-size:12px;color:var(--sub);cursor:pointer;border-right:1px solid #3a4a6a;}
+  .chattabs div.on{background:#232f47;color:var(--text);}
+  #chatlog{height:118px;overflow-y:auto;padding:9px 11px;font-size:12.5px;display:flex;flex-direction:column;gap:4px;}
+  .msg b{color:#7bc8e0;} .msg.me b{color:var(--accent2);}
+  .chatin{display:flex;border-top:1px solid #3a4a6a;} .chatin input{flex:1;background:transparent;border:none;color:var(--text);padding:9px 11px;font-size:13px;outline:none;}
+  .chatin button{background:none;border:none;color:var(--accent);font-size:17px;cursor:pointer;padding:0 12px;}
+  #stats{bottom:96px;left:50%;transform:translateX(-50%);display:flex;gap:12px;}
+  .statbar{width:190px;height:24px;background:#11192bcc;border:2px solid #3a4a6a;border-radius:13px;overflow:hidden;position:relative;box-shadow:0 4px 12px #0006;}
+  .statbar .fill{height:100%;transition:width .3s;} .statbar .lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;text-shadow:0 1px 2px #000a;gap:5px;}
+  .hp .fill{background:linear-gradient(90deg,#ff5a5a,#ff8a6a);} .en .fill{background:linear-gradient(90deg,#3a9ee0,#5fd0ff);}
+  #hotbar{bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:5px;background:#11192be8;border:2px solid #3a4a6a;border-radius:12px;padding:6px;box-shadow:0 5px 18px #0006;backdrop-filter:blur(5px);}
+  .slot{width:44px;height:44px;border-radius:9px;background:#232f47;border:1.5px solid #3a4a6a;display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;}
+  .slot .cnt{position:absolute;right:3px;bottom:1px;font-size:10px;font-weight:800;color:var(--accent2);}
+  #minimap{bottom:14px;right:14px;width:172px;height:120px;background:#11192be8;border:2px solid #3a4a6a;border-radius:12px;box-shadow:0 5px 18px #0006;overflow:hidden;}
+  #miniC{width:100%;height:100%;display:block;}
+  #pts{top:66px;left:14px;background:#1a2438e8;border:2px solid #3a4a6a;border-radius:11px;padding:8px 13px;font-size:13px;font-weight:800;box-shadow:0 4px 12px #0006;backdrop-filter:blur(5px);display:flex;gap:7px;align-items:center;}
+  #pts small{font-weight:500;color:var(--sub);font-size:11px;}
+  #dpad{position:fixed;left:16px;bottom:150px;width:138px;height:138px;z-index:21;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:5px;opacity:.85;touch-action:none;}
+  .dbtn{background:#1a2438cc;border:1.5px solid #3a4a6a;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--text);user-select:none;cursor:pointer;backdrop-filter:blur(4px);}
+  .dbtn:active{background:var(--accent);color:#06281a;} .dbtn.empty{background:transparent;border:none;}
+  #actBtn{position:fixed;right:200px;bottom:150px;width:72px;height:72px;border-radius:50%;background:linear-gradient(180deg,#9bf0bb,#5fce86);color:#06281a;border:3px solid #d6ffe6;font-weight:900;font-size:13px;z-index:21;cursor:pointer;box-shadow:0 5px 0 #2c7a5d;}
+  #actBtn:active{transform:translateY(4px);box-shadow:0 1px 0 #2c7a5d;}
+  #prompt{position:fixed;left:50%;bottom:128px;transform:translateX(-50%);z-index:19;background:linear-gradient(180deg,#9bf0bb,#5fce86);color:#06281a;font-weight:800;padding:9px 17px;border-radius:30px;display:none;animation:bob 1.1s infinite;box-shadow:0 4px 0 #2c7a5d,0 8px 16px #0006;font-size:14px;border:2px solid #d6ffe6;}
+  @keyframes bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-5px)}}
+  .overlay{position:fixed;inset:0;background:#02110bcc;display:none;align-items:center;justify-content:center;z-index:40;padding:14px;backdrop-filter:blur(3px);}
+  .overlay.show{display:flex;}
+  .modal{background:linear-gradient(180deg,#1e2a42,#172033);border:2px solid #3a4a6a;border-radius:18px;width:100%;max-width:450px;max-height:88vh;overflow-y:auto;box-shadow:0 14px 40px #000a;}
+  .mhead{padding:15px 17px;border-bottom:1.5px solid #3a4a6a;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#1e2a42;z-index:2;}
+  .mhead h2{margin:0;font-size:17px;} .mbody{padding:17px;}
+  .x{background:none;border:none;color:var(--sub);font-size:24px;cursor:pointer;line-height:1;}
+  .npcname{font-size:11px;font-weight:800;padding:2px 9px;border-radius:20px;}
+  .tag-e{background:var(--e);color:#fff;} .tag-s{background:var(--s);color:#fff;} .tag-g{background:var(--g);color:#5a3a10;}
+  .btn{display:inline-block;width:100%;background:linear-gradient(180deg,#9bf0bb,#5fce86);color:#06281a;border:none;padding:13px;border-radius:13px;font-weight:800;font-size:15px;cursor:pointer;margin-top:8px;box-shadow:0 4px 0 #2c7a5d;}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #2c7a5d;}
+  .btn.alt{background:linear-gradient(180deg,#37466a,#28344f);color:var(--text);box-shadow:0 4px 0 #161d2e;}
+  .btn.ghost{background:transparent;border:1.5px solid #3a4a6a;color:var(--text);box-shadow:none;} .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .quest{background:#232f4790;border:1px solid #3a4a6a;border-radius:14px;padding:13px;margin-bottom:10px;}
+  .quest h4{margin:0 0 4px;font-size:15px;} .quest p{margin:0 0 8px;font-size:13px;color:var(--sub);line-height:1.5;}
+  .reward{display:inline-flex;gap:4px;font-size:12px;font-weight:700;background:#11192b;padding:5px 9px;border-radius:8px;margin-right:6px;}
+  .steps{display:flex;gap:4px;font-size:11px;margin:8px 0;flex-wrap:wrap;} .step{padding:3px 8px;border-radius:7px;background:#11192b;color:var(--sub);}
+  .step.done{background:var(--accent);color:#06281a;font-weight:800;} .step.now{background:var(--accent2);color:#3a2c00;font-weight:800;}
+  .filterbar{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  .filterbar button{flex:1;min-width:60px;padding:8px;border-radius:10px;border:1px solid #3a4a6a;background:#11192b;color:var(--sub);font-size:12px;font-weight:700;cursor:pointer;}
+  .filterbar button.on{background:var(--accent);color:#06281a;}
+  .dropzone{border:2px dashed #3a4a6a;border-radius:14px;padding:22px;text-align:center;color:var(--sub);font-size:13px;background:#11192b;cursor:pointer;}
+  .learncard{background:linear-gradient(135deg,#2a3b5c,#172033);border:2px solid var(--accent);border-radius:16px;padding:17px;}
+  .learncard .lk{font-size:11px;color:var(--accent);font-weight:800;letter-spacing:1px;}
+  .bins{display:flex;gap:8px;justify-content:center;margin-top:14px;} .bin{flex:1;border:2px solid #3a4a6a;border-radius:13px;padding:11px 4px;font-size:12px;font-weight:800;cursor:pointer;background:#11192b;}
+  .bin:active{transform:scale(.94);} .trash{font-size:58px;margin:10px;animation:pop .3s;}
+  @keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+  .quizQ{font-size:16px;font-weight:700;margin-bottom:14px;line-height:1.5;}
+  .quizOpt{display:block;width:100%;text-align:left;background:#28344f;border:1px solid #3a4a6a;color:var(--text);padding:13px;border-radius:11px;margin-bottom:8px;cursor:pointer;font-size:14px;}
+  .quizOpt:hover{border-color:var(--accent);}
+  .rankrow{display:flex;align-items:center;gap:10px;padding:10px;border-radius:11px;margin-bottom:6px;background:#232f4790;}
+  .rankrow.me{border:2px solid var(--accent2);background:#33405e;} .rnum{font-weight:900;width:28px;text-align:center;font-size:15px;}
+  .rbar{flex:1;height:9px;background:#11192b;border-radius:6px;overflow:hidden;} .rbarf{height:100%;background:linear-gradient(90deg,#7be0a0,#bff7d3);}
+  .shopitem{display:flex;align-items:center;gap:11px;background:#232f4790;border:1px solid #3a4a6a;border-radius:14px;padding:11px;margin-bottom:8px;}
+  .shopicon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:27px;background:#11192b;flex-shrink:0;}
+  .rare{font-size:10px;padding:2px 7px;border-radius:7px;font-weight:800;} .r-normal{background:#3a5a4a;} .r-season{background:#2f6fae;} .r-limited{background:#a86adf;}
+  .toast{position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:60;background:linear-gradient(180deg,#ffe79a,#ffd34d);color:#3a2c00;font-weight:800;padding:11px 20px;border-radius:30px;box-shadow:0 5px 16px #0007;opacity:0;transition:opacity .3s,top .3s;pointer-events:none;font-size:14px;border:2px solid #fff3c4;}
+  .toast.show{opacity:1;top:76px;}
+  .hint{font-size:11px;color:var(--sub);text-align:center;margin-top:10px;line-height:1.6;} input[type=text]{font-family:inherit;}
+  #intro .modal{max-width:420px;} .mascotrow{display:flex;gap:8px;justify-content:center;margin:14px 0;}
+  .mascot{text-align:center;font-size:11px;color:var(--sub);flex:1;} .mascot img{width:52px;height:62px;object-fit:contain;display:block;margin:0 auto 4px;image-rendering:pixelated;}
+  .modal img{image-rendering:pixelated;}
+  @media(max-width:760px){ #questPanel{width:172px;font-size:11px;padding:9px;} #chatbox{width:210px;} #minimap{width:118px;height:82px;} #stats{bottom:84px;gap:7px;} .statbar{width:120px;} #banner b{font-size:13px;} #banner{padding:8px 11px;} }
+  @media(min-width:760px){ #dpad,#actBtn{display:none;} }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div class="ui" id="banner"><div class="flag">🚩</div><div><b>순천대 SDGs 어드벤처</b><small>캠퍼스 미션</small></div></div>
+<div class="ui" id="pts">🌱 <span id="hudPts">0</span> <small>에코포인트 · Lv.<span id="hudLv">1</span></small></div>
+<div class="ui" id="topright">
+  <button class="iconbtn" onclick="openLog()" title="저널">📔</button>
+  <button class="iconbtn" onclick="openSettings()" title="메뉴">⚙️</button>
+</div>
+<div class="ui" id="questPanel"><h3>⭐ SDG/ESG 퀘스트</h3><div id="qlines"></div></div>
+<div class="ui" id="stats">
+  <div class="statbar hp"><div class="fill" id="hpFill" style="width:100%"></div><div class="lbl">❤️ 체력</div></div>
+  <div class="statbar en"><div class="fill" id="enFill" style="width:30%"></div><div class="lbl">⚡ 에코 에너지</div></div>
+</div>
+<div class="ui" id="hotbar"></div>
+<div class="ui" id="chatbox">
+  <div class="chattabs"><div class="on">채팅</div><div onclick="toast('데모: 귓속말 탭')">귓속말</div><div onclick="toast('데모: 파티 탭')">파티</div></div>
+  <div id="chatlog"></div>
+  <div class="chatin"><input id="chatIn" type="text" maxlength="60" placeholder="메시지 입력 (Enter)"><button onclick="sendChat()">➤</button></div>
+</div>
+<div class="ui" id="minimap"><canvas id="miniC" width="172" height="120"></canvas></div>
+
+<div id="prompt"></div>
+<div id="dpad">
+  <div class="dbtn empty"></div><div class="dbtn" data-d="up">▲</div><div class="dbtn empty"></div>
+  <div class="dbtn" data-d="left">◀</div><div class="dbtn empty"></div><div class="dbtn" data-d="right">▶</div>
+  <div class="dbtn empty"></div><div class="dbtn" data-d="down">▼</div><div class="dbtn empty"></div>
+</div>
+<button id="actBtn">상호<br>작용</button>
+
+<div class="overlay" id="ov"><div class="modal" id="ovModal"></div></div>
+<div class="overlay show" id="intro"><div class="modal">
+  <div class="mhead"><h2>🌳 순천대 SDGs 어드벤처</h2></div>
+  <div class="mbody">
+    <p style="font-size:13px;color:var(--sub);line-height:1.6;margin-top:0;">아이소메트릭 캠퍼스를 누비며 SDGs/ESG를 실천하는 게임입니다. 마스코트에게 퀘스트를 받아 현실 활동을 인증하고 <b style="color:var(--accent)">에코포인트</b>를 모으세요!</p>
+    <div class="mascotrow">
+      <div class="mascot"><img id="m1"> 우송이<br><span class="npcname tag-e">환경 E</span></div>
+      <div class="mascot"><img id="m2"> 체리니<br><span class="npcname tag-s">사회 S</span></div>
+      <div class="mascot"><img id="m3"> 총장님<br><span class="npcname tag-g">지배구조 G</span></div>
+    </div>
+    <label style="font-size:12px;color:var(--sub)">닉네임 (2~10자)</label>
+    <input type="text" id="nickIn" maxlength="10" placeholder="예: 김순천" style="width:100%;background:#11192b;border:1px solid #3a4a6a;border-radius:11px;color:var(--text);padding:12px;margin:6px 0;font-size:15px;">
+    <button class="btn" onclick="startGame()">캠퍼스 입장 🚪</button>
+    <div class="hint">PC: 방향키/WASD 이동 · Space/E 상호작용 &nbsp;|&nbsp; 모바일: 화면 버튼</div>
+  </div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const SPRITES={ usong:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAA0CAYAAACdB4jyAAADU0lEQVR42r1YPWjbQBh9uhhB2qGQyVqKIbiqtoLtgBdDuwSiBEo7euneKRBn6ZKlSxLw1L1LhnYogcqBLAkYQkBuZ2GMwWRRyFQy1GAI6tB+l8tZsu5kuQdG4nS+9733/dyPEUURFtXsmvtg8nqzhdEgQOh7KCwSkICchvnvyxAlOAh9D0ZejEV21tqmAHbfgu4Eoe+h3+sYhbwAk8DiQAHMJ7Vdc6N6s4Vla5g6VgTNDCyyVAENupOpvkIWUGttU+s/MlstYJFlqezw/nEIjAYBSmVHib0WMLEU0yLoTrgB9JQldRpmrMwAwPRB7yddtoYYDQLeRwaEvjcf4yRQ2QBSIPQ91JstbsA4BIBAD1gFVDagVG5xBcQ4UJY6S+SKvqRAo6DT9nFS2VNp43CVx4EWcJLESf2lssNlHg2C1NQq5CEzACxbQziWqTye6bDK2qy1zam1meXBViXiUxmnpUGWFheQLM5Xi2Asy81EmV/tvFnY/kuWm2XJ0SwSy3OzWVbNa4g4Xyxjiua8GcskRD8zMZrjlr6F+1hcV/9HgDFduWR3jMNVHK5vKLlJlJvpgDoNc0qyT+9sAEDn42utjR9T9af4ndjR0/1wrJQFTsNEvdmCXXMj41l1g9fnLMF0uL7B33dOT5TyOvQ9sH6vY4S+NxN07/YGe7c3sT5+/7nPWe/d3mA7fJRYC5yGeS+1Tg6TcaLUo0GAndMTfHnxCwDw5PFIaYk0oihKrdPEom39ngo2eZw4Jq6dHX5Dv9cxuI/zXvzTwNkiFn6VXGYqu/68W+h7fytX3jIH3Qm2zq+wsjJJDFAeXHn6OehOsHt3DQDYXyo+OMDldhWR1rgB3WLyvpryc17mTsPEdzx9wJ4M2BZXJ6pe9AOArfMrbsg4XI2t03LNplShPnonuenJfZx0muBW/vzBq87u3TWfgN7Fcf1ex6BdhvhOja4kEu+5ZHARQLRe7CPgzEcYUX4xSC7eFhMnEmWcCzhuwovj/KJ9JjCx3l8q4uvzl7mmWSpjAr88Opg5TvfMpVRAKGDsmhuhUo0dc3l0oBxYWrtMOS2yjtECptRqJ7AFgHalGnsAzyy1XXOjdqUKCPk6sy5XqrBrbpQmu9JFuXxTIK/h8jcVX/8BiLr6vCZXLU4AAAAASUVORK5CYII=", cheri:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAA0CAYAAADMk7uRAAAErklEQVR42s1aPWzbRhT+RNFAN3MIECn2QCShJQHZKhnwVHeMxUwNushAPHHwlkEanF0DNWTLoClA4aFFhw40MjabANkZC0mgEmhISgfwoAAZAhgOO7hHHU/Hn+OP7AcQFunT3ffuvXvvfY+C67pY9bVV33Ofvfzb3arvuWnnKriui1VKpdF0d1ptzOwRAMAZWr7/T05PCiLzyasCTQMj4AGgvK1D1WreM3ZslAhZoNJoBg6mF2XH7bTaGBz3PMBk58lnIs7QyscCBBBZUNVqOIIDw5579zRoGlhfUwA4QGvfG88KUaa8rXvzxFUk0gKVRtMtb+voawo2Dna9559ev/WNo8Fdgw6XLsqY2SOuJUSsISUBD2DpnoCOAx4AjuCgryk+8OyBjiNSVLTggQ+SuOB533GGFnZabeGzEGqBmT2KDT6NEEvM7BFUrZaNBcjhzFLWK5tYr2yGWmJw3BOKRFKUn2YpXyYfM7eeFBUp2GgTFIWyUCLJGYo8AwDwdTD1nn0dTBODjyN0LkiVyCanJ4VKo+ka0NHPyfy5u9Dk9KTgDK3ADHrrFYhS4jYoJkEw4cSVLsrc51krLccp5Hi1Sphcg5wDjNKGPU8UaXLjA31N8YoynrXIbvc1RRg8HYnCElsqBTYOdoHXEwDA7/ojX6TaONjFCYDmi7+EwPc1BdD8pXdYiS1UTvN8mbfbPHdJ4z6GPYeq1bhlhpzGfdj76XgMQEEexR7goNtqL1FOCSmLs7uPF1M8rFZh2HNMx2OugmmFPWueApVG0yVXUB7gyQ/3/wUATwnDnsNULZjFkjfm7mPJu7Iqu2mcEiEuLCdNEr/7mgJlbV94t4OS5HQ8xnQ8DqWrEjGNqVowVYurRFA2/vzmO759uIfPb75Hgvz24Z4w77jz4Ax3HpyFk/qfDl+5pup3kVdrizYIXdjRfZwsuAKJTHSEIpvEw0TWNOy5RztlZ2jh4qru0/TwsocZlX3ZbJwGfBdlryVjqhbml4CpAoatc4EDQGemo6/x1yxs1fd8rT7eJBfvFwpeT5ZNqDTsOTpX50tuQtZgcwu9CSQnFFzX5R5csuOsMlkqkLSnRLtQYCZmu3FZx/QslHaGVrxSgrUMT4H1yuaNsDY5DqGJ09z9Mvl4I0pIyLhtEtT3yUuEX3AEVae3nlLm2bFbqQXYCHXTlpDSNKBM1fKKrZvqUCS2wG+/Lqf7MOlcneNhtZp/GI16ybaoiywfeJYzEAsRUdb2888DhBsEdQQIeBoYAR+WLy7e16FUsZpENrNHePljHWaxtPTybqfVxuFlLxT8KqWLsv8QE+JiFkswVQuHlz2PqbGcVBR8mkPOfpcEjcFxb9kChLx0oHssDQDIPXEJ51188DRHTlq0PRkCT7s6/jyyfFjlsNY6DZoG/0f1Z+DdmRAQZ2jBgFjeoMvmoAAjRXWl2fBoFkvC77F8SsTMGSz4oM6cHFWJ0pZIe2hpbv1kyOca9PviOOvIcRftIJuIE6c8F1lDFtm5tODZJm0W4VdOsnOiYqoWoC7KDdEfdGReC4m+FOlcnXuNKhLJzGIpE5fM5QdP9GEFgOf//336i45P/9SAKgBOozaJ/AdCxoM8bUQS2gAAAABJRU5ErkJggg==", chong:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACUAAAA0CAYAAAANFPE9AAAEb0lEQVR42s1ZP2giWRz+HFIErhGbEO5YXMHLyjVbXARJmN6NYLoUCVumNFWyx5XXXay0TBnWYuGKE0bSSxZhbFJs8EQIEi4rNpJmj3ReMfd7+5s37z2fOub2AzHRmfc+v9//N4npdAqOre29aeHwFMNBDyPfAwD0u60EnhEJTmpre2+6mS8BAHb2gY9/Bp+vitzW9p7YnK+9prr4w+tHYAicVTIAgHK9JBZZlhgnQgLIa0eUah/vhhZZdzPi73J9spRq3BLpbA614jiydr/bSghS5Eu/f9eJLCYTS2dz6DSqRgKcNKlDhJqVlLjuqX0HAHj3pQAA6DSqavPJeGrfCWLNSgrlei8kvYx0Nqc0EyfDCQHA9z/1hA/PNJ9OMY7Hv9oAgOQrF+f3Ezzc5jAc9MT3JjKEd18KIuIjStXTSVSGj9aEZBz/8wl4+Ql4GZBUqa4CEep3W4kIqYfbHPCfX9kSUUFFiNbUESM4KsbzEkq+cgUJHZl5VHcWuWlRleQ9dPs4cg6RnXLVIGLpbM6s1HNj3c2EotX5P1XSYQ3fCHb2gY8oYWt7b+p8KyqdvUjZKXV+PxGpf2c/fONK+6kff34TUapcn0SU4wRVpSMunFxtBI7Ow/H8fqLc8I9fvQih8/uJdvFyfSLe6SVvris3kZTA1ZgF3bVcaeq/ZPBeamZG39lXX+i/fztXJKm6S5OiEVI8cZ29SGmlbVZSIdPqfoDK93Q+yF2H/nd0diU/0BGUwzh/dKndyBQUshmVPkW9Mr06jaqVk7Z/+yW0kSkITKYc+R6cfreVGPmeUGXke/Dfv0X7eDe0EY8glZOuZz5HVFT5C4/yucqMaML+vkb7eBfuhYevbbJ9fiKzyeQ+vH7EmdS2cJJrNG/xRt+9uIbcqx/cJIN5cAGo7uPDCAUHtcNO4fBUDIIj3xMh7F5cAz/swr24nisd2ODgJqn0JRrL1jqNamhGo8gJpP8sCAWjFdB0lyfFlVPmKSJE3cKsIXOZ7pJPTOtuRgy2XCXl3Ef+pWtnVMV6XvDiLhOKRN+qj3zIVIE6Ve2eCfl8iqumc3BT/jGBF2eTAEZSpo6U/IFKg1xahoMempWgjpKf2lpCS8qG2FP7Dgc3SfBUItc6OdxtsNSIVU9/JURRFEdH6sw6Y6K6qMLDbQ6b+ZIo3LN6p9iUMhGrFcdIZwNiOjPLvvYsc1+tOAaK5n4p34hZqThy02a+FDrZi02pwAxjrOqYei5SlBZM04fNDxr5Xuh0mBM0lpk4TKVy9lpxjPKgpMhh6vP5pUnxgUGVErjZZcJBOzSJz9HzR5fIH12i320lTNm6Vhzj5GpDO441K6lIIFjnKdUEY1s6hoOe8XBEzmXW5hsOeigPgkpfODy1CvOTqw1WrMeGseoSC/sUtR5UUmaVFTobH/keTnAqCJJJ+dn5wtEnk5APLzbzpZDj02dUG8lUQduzoe0ejK2LLunpfIrnHf6QiG9ukzytSdkmWXrCxZ+uzttmx5Y8ZXV0Q4EN/gV1+sX7oOidZgAAAABJRU5ErkJggg==" };
+const IMG={}; ['usong','cheri','chong'].forEach(k=>{const i=new Image();i.src=SPRITES[k];IMG[k]=i;});
+document.getElementById('m1').src=SPRITES.usong; document.getElementById('m2').src=SPRITES.cheri; document.getElementById('m3').src=SPRITES.chong;
+// 전용 플레이어 스프라이트시트(32x32, 4프레임 x 3행: down/side/up). tools/build_character.py 로 주입.
+const MASCOT_SHEETS={"usong": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAAB4CAYAAAA6//q/AAAEyElEQVR4nO2cu27UQBSGJ6sRRQq0FeWSTWspsiiR9glIOmqKCNGEJ0i1FU+w2yBEQU25bxCJOorkNo4iKqqIFwiyyVhex5vd2HM855z5PwmRvWZ+H3suZviMAQDEy54RSHKY3rc9n11fiswTMr+VVoDid8++fK4e317n5d+Tw6kx54v7odpglOS3EgsQkkRZ/pERxKYr77nvkUpCkN9SNIDiKmheeU2KK7F6nehKTBTmt5IK0EbR9bpumJJEaf7eQ0A59kXMRHh+EXOALuO6prlAQpjfUjbARze4reutX4WuK/TdFSeK81sJBQhJojy/iCEA0IETIHI63QrmivQZeYj8I98N8FmEXcbfNoqx2K3Lh1wNTATmH0kswMX5ovyz7bm+JBHk7zQEuF9UPzhtz3XF90Grf5+PWfmFovyWWwG2XXXzv3/MvOV195ni9dMNr+26NEsiym85FuAp5i9fbX198rLrt5vo8ltuBfDFo5synpgry2+5FaC8Os4XZZd59uNT9fzV7xed21KfHA11Z+5WSH7LsQDFe3yPw7sWPossf+sykOIqKb6T+33xGPOruhNYB3cFp2FPAA4FGGKnkPT8VmsBOHArIL/IIWD883v18937U3P0a1U9vnp7bLQz9pjfci1AMWFafvjaOhM+ebO/NsM+Oj5Ye+x4/fGdoWCsKL/lXIC2WfMuy6Pqc99M+d4us+8skvyWawF80Pf3ZhHkJ50DcFz3DkkmIL+VeVD1bPn2wXJ1U/1M/p9DOVAPqWn/f4ieRuQJ8Giytvo/1rrHRjFZowfsm3fPxwYH3ztuuJNEnh8AAAAAAAAgGZFLFngCU3gCHfAE5uVxgCdwwN5nBk9gGOAJTOEJ3AQ8gTk8gdS9zwyeQJ7bn0MyEZ5fhCMInsAUnsCngCdwWh4HeAKJep8ZPIFAKyLmAIAO8XsCNc3I+wJP4APwBOa6PYGUbsDY8vcaAny68SR5AjXlF+cJ3KZra0OTJ9B3fhu6ARS6tj6TwSSy/JZbAbh7ArXlhyeQCHgChXjymsATGJknL/b8qu4EchuHJeSHJ1DxCQhPoIAChEbkvwYWmra6qq3QtNVVbdoZe8zfyxNYOPJcA3xLGnfRtLnVhdO0Ne+LU3sC7xTkt5wL0EXTtvYZYk/ghYL8lmsBpHoCM2H54QkkhOO6X8UksE3ZWnB2fBCVNu7EQ/5eJwAKsN+7AKGxGjx5sXsClz3ywxPYAXgCAQAAAAAAAHIRuWaGJzCFJ9ABT2BeHgd4AgfsfWbwBIYBnsAUnsBNwBOYwxNI3fvM4Ankuf05JBPh+UVsCIEnMIUn8CngCZyWxwGeQKLeZwZPINCKiDkAoEPcnkDNM/K+wBP4ADyBeRyeQGqSCPKzHAKkeAKpgCfQs9lLoyfwOZB4An01gIIhPIFa8luts3FqT6CW/PAEEgFPYA14AhdsPYmj2D15sednuQzUMg6HBJ7AwJq2CYMTEJ5AAQUIjcghoO7IK1RtdUeeT1VbDPlt6Ab00bS5FYbTtLnHQ3kCNeS3oRvgW9O29jliT6CG/DZ0A7R5AqXlhyeQEI7rfvGTwKYlCxizXN00jo/iE6AZkvuGC+49jcgToA48gZe9hhl4AjsATyAAAAAAjHD+ARux6GtSef1RAAAAAElFTkSuQmCC", "cheri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAAB4CAYAAAA6//q/AAAEl0lEQVR4nO2cPWvbUBSGb8WlQ6fSIUu3jFUGjSFr/kHBHUrJ2LF06FBSyBBoyZChZMxYSikp9B9oN3TxEJVOIUvWUjpkyKJwbctIwrGV+33OfR8IsR1bOq/PzdWVPx4hAKBKvlnU6kckSm4hvzQtQP2uLiYPTLaju+/86NnsynsRpI6cQX5JuQGLWlp1+KohZ5Jfhi7gXvsZMN2p+3ifCY7o5pdUGqC2Wx586tz2Rnyd/j65fjW74WD2a/dw31kNgll+SakBfRb79UDONL+k0ACdla6PQ8EJg/wy9gao7fz6/m16+f/vy7X3v/pzKb68eD29vHd2aq0GwTS/pNCAkOTM82ehCwBhwQBInKgHwLKV931Qj6X8UnHuIX+WQgN0a8gTyO9lBtBdRTdPvlp8tRdgu4f70582y25TqG2EbkQecX45tID+zpqN929rVsDtAuZ/j35FnGJ+K+8F+GbZtNzcpk7DuFNazC/JNeBmIsTD4s4/P938J64uHjstoWSUP9MqYAWqABuo6XLZMW1VeEU/fHNstDb93vDKn5FrgAY6+64Sye/lLCDGxY9PqojzR/1CEEh8ANw5DQ8k9NRLIf/KAYAGTNgPwKhnAOAeki8Ejc8/Ly5vb70Vf69n79fP2BHcGVvML2NvwPww1Hkd++Pzjc40++Pd1uL63tlp57HCAWNG+SWFBrS3M+SNFZuNr5jnl7E3IAYqxvmxCEwccotA9d/14Wf4D1nExOj4fHE5yFfDYp+SuVMZHHJIDoB++NHx7MuZzXXBmKo3A5rm1Xpw+79OFdC/LpiTJ54fAAAAAAAAAAAIATyBBTyBU+AJrNXTAE8gPIE1PIHwBNbwBMITWMMT6GDBWcITyM+Tl3p+eAIHAE8gY0/eOuAJBKzBp4ITJ+oBwEXTpgs8gZaAJ7Dg5Qlc58bj7gm0mV/LE9guoNnJqgLm9yV1RpAnkp/09wJM1gccKC3kl2QbsMaX54OSQf7MlS/PlLV6moHhnWnabnjkz0IXQM4TyCw/PIEeiHHxR+KFIJD4AICmbgJPIAZgwjMAcA/JAaA0bW1Vm9K0dVVtvBlbzG/kCVSOvKYAxZNHL4VtVmnamtO0RtPWP21z7QncZpBfUmjAfZxAtpteMc9v3RMY8zmvLhXj/CTXAMAepAdAW9naTMWUPwEUIr/RAEADNowbEBrJwZOXuidwZJAfnkAN4AkEAAAAAAAAAAD8A09gAU/gFHgCa/U0wBMIT2ANTyA8gTU8gfAE1vAEOlhwlvAE8vPkpZ4fnsABwBMIT6Dg6kkk/ZlAYA4GQOJEPQDgCSycexKzFBoAT2DB0xM4BM6ewCE49QQOLSBmT17q+aNeAwD3YAAkTsbVDxSTpi3m/FnoAsh6ApnkhyfQAzHPPtEeAoAfoh4A8ARO4AnEAEx4BgDuISeIULQdeUrV1nXk7QjujC3ml6ELMNG0KdQpVqNpU+ydnXYeKxwwZpRfhi7AtqbN5n5TyC9DF0CBinF+LAITR1K3ZAEhRsfnneeH9QDQmZK5UxkcckgOgDbwBE6M1hvwBGoATyAAAAAAAABAkOUW7TKKroDXKq0AAAAASUVORK5CYII=", "chong": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAAB4CAYAAAA6//q/AAAEnklEQVR4nO2dMW/UQBCFN2YL5CpFCpSCIkJpLCEXNNcgRJWjpU8JHUpBQUVB5b9ASn4AJVQglCYNRWTJTYRSIooIXWVREAUtYs3GchLH9np3Zt4nWfKd7PO8zHg93ju/KAUAkMuaIkK2lZ/b9erkaG3sdtTIPOlfo5AA85mHH141rxdPis7P7rvd0BgUQ/16YADnPQPo3G4o9edfKn18uzlWn+2mIGOsX4cO4CbYz3T/yG2+fztW6q5Sqdqe/Pg1Q/2aUgJCkzLUnyimTHn956zfWwEgAQWJAiQ5ApjiMst173FlMaH+QQWABBRsCvBGTWAM1AcnTRPmdtvNewcnarX5W3Glnli/ppaA9OHW//WOWy3fya+Z6U+oJSA0KTP90TeBV024dN6DD9xXqn7tO4Axt0LtqVXDrTuPmvWzH18699u8t90MyWOnYzPm+nXsCQhJJkB/9JcA4BcUgHDYF4AZijk0g770JzEnwFw77QwbxVk2Cvp1jwCa4K/6GtQXtoEKcRZXAvTrmBPQxWWdt0v7bBnThVfM9evYEzAUX8c8Y6bf25dBMd/7zkFFRD+5bwMN5dejZv3+g1ytTn/+XU/XN1S9OlXcKSfUnwwNwC4GE4BZTAC+cDtil/brpy/eez/7Skb6E0oJCDmsVkz1Jxyva76oGOpnPxMImDWB5ix8/lpFcU8eC8vd/cGjFLkCaIuMZYKG6qWJZAG0xS9391k+EdxnBByrd9DO7SdguT6SfRnS9QMAAAAAAAAAAIAmZCYt4BOYwyfQAp/AAj6B8AnM4RPYBXwCj+ET6IsUPoF0gE1dAZ9AFCDz3wRSfmg0Fv2jCgAJKMgXINmfhBk7tk8v97y4ckvSr6kmwLVrC0HNRL+mmoDQpEz0R98Ewicwl+cT6B4ztE1bxly/ji0BXd58c5MJ0q9jTEBIMmH6o+8BgF9QAMIhOxF0Fe7snMRHtRY30K9jS4DrzTfmWhwy8QtC+nWMCbD7uiaNNp4+Nm1jqITp17EloCuOuX0AKkH6degAYqYSoJ9kE2jt2YxHnsH65EmhnFC/ppIA99r89s3OhWbr47tnjUWb3dZnLCUj/ZpSAtpuHJdt4+vYC4b6J/cJ5HzfXTHUj5lA4ZAuADsUW8xQzLVb96V/VAEgATujExAazcEnT7pP4HKEfvgEDgA+gQAAAAAAAAAAAKAImVkz+ATm8Am0wCewgE8gfAJz+AR2AZ/AY/gE+iKFTyAd4BNYwCcQBcj8J2FgPCgA4aAAhIMCEA4KQDjRFwB8AnN5PoHu/hJ9AufUr2NPQEgyAfqjvwQAv6AAhMO+AMxQTO15vTn1JzEn4J8pA+n/THIYuf5rTaJcp6wQHrq2gQpxFlcC9OuYE9BFH5u29tkyhWdfxlS/jj0BQ/F1zDNm+r35A8R87zsHFRH95AwiXJs2a9VmbdrS9Q1Vr04Vd8oJ9SdDA7CLwQRgFhOAL9yO2KX92li1zeETWDLRn1BKQMhhtWKqf3KfQM5UDPWznwkEzJrAtksWUGq5u3/h78O6AKTYuM91aSJZAC7wCTwa1ZfAJ3AA8AkEAAAAAAAAKLL8AWI5DkTlvGZ8AAAAAElFTkSuQmCC"};
+const HERO_SRC="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABgCAYAAADVenpJAAAFmklEQVR4nO2dPWgUQRTHJ8tUAQVFEglyhQqCaySFFof2gmgjKUQQgm1AJOUhFhIsRYS0NhGxkDRaaAqx8KMwxWE8UVCLQw4McoIBK+FkNs6xWe92bzI78/a9eT8It7d3uff++2ZnZ2b3zQjBMAzDBMqYQEZ8cKaX93nraxOdJkj9ElMAlO35s/uT7fa3jSHfmum59kEQ0i+xBWC4XffEBPVLTAGoAm1i+iNoBxhYjGuAqtC4cXXb+1s374qQaJSkX2INQH32jnjz6Fp/+/xxv5VZg4j+HR81ZXTQto8Dnz34ev/c3AVvftSJ6I8wBuD3Wqdf+hVqW+3zQYOYflmqAxPCC+MnppLXTvtb8jpVO5DsG/djXlDSLzEFQPWv67N3cgdidH/dZV98HEC/HoAqutyY6h5DNxL28LZ49v598v77h0/J6+TRI9u2FZ8X7znxJQbQr2wevn4l2T5z7Fiu/s2VV0Y+SFPhRQGIV0TPxYEoOvCuiYH1m/o6qn1pWgKL6H9v8V5p1fAw+/psd00MrH8Yg/Sb2rcaCPIVgKoySUA/6qHg6aOd5C9UpkvQH2EOwPqHrdY4FNME9EeYAzDIB9X6X57ZDWLbJUqT0la2D9aXgCoUgiyqr+yrFb7uQf+/8Q8nvx3ZlsAsrs7AUe0rXAR/GVj/qJpM7Y/Z9IPTpAciTBw2sa9+U70eOn2uv//Lyydi18Hj/febX985HQCaB9Kf9qNIv4n9kbuB+geXLi7kOmBi3ATohz1bwPpNcPZMYFXofnwN7UKlkL+27kkENw7A2IOuBkjaAWL7fQGbM4BCDfjzR9dfXsAgB3wHIC0S4iZRF1h/Fps2B7oaoKhGgG6AYdO7o39On3W6a1aWQxiIA9fPMAzDMAzDIAddizWv3x9CCzwuWb/EFACdnw+Vm09Rv8QWgCpMENEmpD+iNEGCStFyPTTcJqY/whaAPHSqFhRvEOqPKAUAmg5C/WhvBmVTtNVDk3P/zkKVQEq9R9AoSb+kFgBfTwQ3iOiPMD+SPSxfH5I6Mv0RhQDofH2Vpw/Bb8T6JaYAbJ1ZM71dF06JFw/e/pecqXLnIRhHrF9SCIAvWhXUn50YwxR+KjhwojJKoC6FEIRu3xauAQKHC0DgcAFAzuqlk1ZT1aAqANAzhVWRy81fVv8fQZdAk+CrLNxsJm7Wvsrc9VlQVj3pd4WELoE7ormZ5MGrXPx6KvBPXzz37splz/qTRJQVkaSo9za2nk3Y6LST4/HZV26gCoDie3NNTEzV+ruXFhe8joNrW94vDc1q6M+yE9uo2gBM+XABCBxUD4Sk07D37NsrVJasrvbSKdvZzyjSTemVFpqlbSC6OUGhiiSkX2KeGUQf6LzPKNIaoFfv9z4/QBlOYCMOXD/DMAzDMPhB12CBXLSKon4J7YCp7eIlUt32w2Ni+iW2ANQOTIBl6sYE9UtMAagCNWL60YwEUjroVdJvXAA4ABuCEnw7OHC4AAQOF4DAQdcIzE7MkOWxo+XVqOqXFANgsno2Fv2uHnxFVwPc/1PLXb7d5+rdvkivXl6k31kB0CVwFAdcnIHQWUExsH5TX0udJCpdAotwcQYOs+8rIycG1j+MQfpN7VtdAjCnRJXBJAH9qLuB0Mu3U9AfYQ4A9Mrl0wT0R5gDMMgHV6t3Q+sftnq5rQ/Wl4AqFALIyRrXPehXWpQmF0S2JTCLqzNwVPsKF8FfBtY/qiZT+2Om/eD5h7f7/eA0uh+scvZNHDaxrxdpzFu+XeXJuygAMbD+tB9F+k3sj9wN1D+4dHEh1wET4yZAj+q1gPWb4OyZwKqQXbw5dKTF4tWoxwEYeySFzFjo5duha8CfP7r9bS/zA2Qd8B2AtEiIm0RdYP1ZbNoc6GqAohoBugGGTa/1/AC6a1aWQxiIA9fPCDr8BVOBnT53yIwMAAAAAElFTkSuQmCC";
+const HERO={img:new Image(), ready:false, FW:32, FH:32};
+HERO.img.onload=()=>{HERO.ready=true;}; if(HERO_SRC.indexOf('data:')===0)HERO.img.src=HERO_SRC;
+const HERO_ROW={S:0,SE:0,SW:0,E:1,W:1,N:2,NE:2,NW:2};
+const HERO_FLIP={W:1,SW:1,NW:1};
+// 팀(학과) 컬러 변형 — 후디 3톤 팔레트 스왑(멀티플레이 대비)
+const TEAMS=[
+ {id:'env', name:'환경 그린', ramp:['#96cabe','#4f9e92','#387369']},
+ {id:'soc', name:'사회 로즈', ramp:['#f0b4c0','#d07a92','#a85470']},
+ {id:'gov', name:'거버넌스 블루', ramp:['#a9c0e0','#5f87c4','#3d5e96']},
+ {id:'sun', name:'선셋 오렌지', ramp:['#f0c489','#d8923f','#a8662a']},
+ {id:'vio', name:'바이올렛', ramp:['#cbb0e2','#9b6fd0','#6e479a']},
+];
+const HERO_BASE=[[150,202,190],[79,158,146],[56,116,107]];   // 시트 후디 원본 3톤
+const HERO_VAR={};
+function heroSheet(){ const id=State.team||'env';
+  if(id==='env'||!HERO.ready) return HERO.img;
+  if(HERO_VAR[id]) return HERO_VAR[id];
+  const team=TEAMS.find(t=>t.id===id); if(!team){return HERO.img;}
+  const w=HERO.img.naturalWidth,h=HERO.img.naturalHeight, cv=document.createElement('canvas'); cv.width=w;cv.height=h;
+  const c2=cv.getContext('2d'); c2.imageSmoothingEnabled=false; c2.drawImage(HERO.img,0,0);
+  const im=c2.getImageData(0,0,w,h),a=im.data, dst=team.ramp.map(hx);
+  for(let i=0;i<a.length;i+=4){ if(a[i+3]<8)continue; for(let k=0;k<3;k++){ if(a[i]===HERO_BASE[k][0]&&a[i+1]===HERO_BASE[k][1]&&a[i+2]===HERO_BASE[k][2]){ a[i]=dst[k][0];a[i+1]=dst[k][1];a[i+2]=dst[k][2]; break; } } }
+  c2.putImageData(im,0,0); HERO_VAR[id]=cv; return cv; }
+// 꾸미기 아이템 픽셀 오버레이(머리/어깨 기준). grp: front|side|back
+function drawCosmetic(id,cx,hyTop,shY,grp,fdir){
+  ctx.save(); ctx.lineWidth=2; ctx.lineJoin='miter';
+  if(id==='eco_cape'){ ctx.fillStyle='#c4564a'; ctx.beginPath(); ctx.moveTo(cx-9,shY); ctx.lineTo(cx+9,shY); ctx.lineTo(cx+6,shY+22); ctx.lineTo(cx-6,shY+22); ctx.closePath(); ctx.fill(); ctx.strokeStyle=PAL.out; ctx.stroke(); ctx.fillStyle='#ffd34d'; ctx.fillRect(cx-2,shY-1,4,3); }
+  if(id==='hat_grad'){ ctx.fillStyle='#2b2230'; ctx.fillRect(cx-9,hyTop-1,18,3);
+    ctx.beginPath(); ctx.moveTo(cx,hyTop-8); ctx.lineTo(cx+12,hyTop-2); ctx.lineTo(cx,hyTop+4); ctx.lineTo(cx-12,hyTop-2); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#ffd34d'; ctx.fillRect(cx-1,hyTop-3,2,2); ctx.fillRect(cx+8,hyTop-2,2,9); }
+  if(id==='leaf_crown'){ ctx.fillStyle='#5aa84e'; for(let i=-1;i<=1;i++){ const lx=cx+i*8; ctx.beginPath(); ctx.moveTo(lx,hyTop-6); ctx.lineTo(lx+4,hyTop-1); ctx.lineTo(lx-4,hyTop-1); ctx.closePath(); ctx.fill(); } ctx.fillStyle='#86c46a'; ctx.fillRect(cx-1,hyTop-5,2,2); ctx.strokeStyle=PAL.out; }
+  if(id==='cherry_pin' && grp!=='back'){ const px=cx+(grp==='side'?(fdir<0?-7:7):8); ctx.fillStyle='#ff9ec2'; for(const[dx,dy]of[[0,-2],[2,0],[0,2],[-2,0]])ctx.fillRect(px+dx-1,hyTop+1+dy,2,2); ctx.fillStyle='#ffe79a'; ctx.fillRect(px-1,hyTop+1,2,2); }
+  if(id==='glasses' && grp!=='back'){ ctx.strokeStyle='#2b2230'; ctx.lineWidth=2;
+    if(grp==='side'){ const gx0=cx+(fdir<0?-7:3); ctx.strokeRect(gx0,hyTop+6,5,4); }
+    else { ctx.strokeRect(cx-7,hyTop+6,5,4); ctx.strokeRect(cx+2,hyTop+6,5,4); ctx.beginPath(); ctx.moveTo(cx-2,hyTop+8); ctx.lineTo(cx+2,hyTop+8); ctx.stroke(); } }
+  ctx.restore();
+}
+
+const State={ nick:'김순천', dept:'환경공학과', team:'env', pts:0, xp:0, lv:1, energy:30,
+  doneQuests:{}, log:[], owned:{}, archive:[], items:{trash:0,tumbler:0} };
+function load(){ try{Object.assign(State,JSON.parse(localStorage.getItem('sce3')||'{}'));}catch(e){} }
+function save(){ try{localStorage.setItem('sce3',JSON.stringify(State));}catch(e){} }
+load();
+const xpForLv=lv=>100+(lv-1)*60;
+function addReward(pts,xp,reason){ State.pts+=pts; State.xp+=xp; State.energy=Math.min(100,State.energy+10);
+  while(State.xp>=xpForLv(State.lv)){State.xp-=xpForLv(State.lv);State.lv++;toast('🎉 레벨 업! Lv.'+State.lv);}
+  State.log.unshift({pts,xp,reason,t:new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})});
+  State.log=State.log.slice(0,40); syncHUD(); save(); pendingCelebrate={pts}; }
+function syncHUD(){ hudPts.textContent=State.pts; hudLv.textContent=State.lv;
+  document.getElementById('enFill').style.width=Math.min(100,State.xp/xpForLv(State.lv)*100)+'%'; renderQuests(); renderHotbar(); }
+let toT; function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toT);toT=setTimeout(()=>t.classList.remove('show'),2200);}
+
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+// 픽셀아트: 백버퍼를 화면의 1/PXZOOM 해상도로 그린 뒤 nearest-neighbor 확대
+const PXZOOM=2;
+let DPR=1/PXZOOM;
+function resize(){cv.width=Math.ceil(innerWidth*DPR);cv.height=Math.ceil(innerHeight*DPR);cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';ctx.setTransform(DPR,0,0,DPR,0,0);ctx.imageSmoothingEnabled=false;}
+addEventListener('resize',resize); resize();
+const VW=()=>cv.width/DPR, VH=()=>cv.height/DPR;
+
+const TW=64, TH=32, HW=32, HH=16;
+const cam={x:0,y:0};
+function iso(gx,gy){ return {x:(gx-gy)*HW, y:(gx+gy)*HH}; }
+function toScr(gx,gy){ const p=iso(gx,gy); return {x:p.x-cam.x+VW()/2, y:p.y-cam.y+VH()/2}; }
+
+/*CAMPUS_DATA_START*/
+// ===== AUTO-GENERATED CAMPUS (build_campus.py) =====
+const GW=125, GH=98;
+const PLAZA={gx:46, gy:49};
+const GROUND_OPS=[[71, 44, 83, 52, 5], [43, 47, 49, 51, 1], [47, 48, 48, 49, 3], [27, 32, 29, 33, 4], [46, 30, 78, 31, 2], [46, 30, 47, 49, 2], [46, 49, 87, 50, 2], [87, 49, 88, 65, 2], [14, 49, 46, 50, 2], [14, 29, 15, 49, 2], [43, 49, 46, 50, 2], [43, 49, 44, 69, 2], [10, 49, 46, 50, 2], [10, 49, 11, 60, 2], [46, 49, 48, 50, 2], [48, 21, 49, 49, 2], [86, 61, 88, 62, 2], [88, 40, 89, 61, 2], [87, 65, 102, 66, 2], [102, 55, 103, 65, 2], [4, 4, 120, 5, 2], [4, 92, 120, 93, 2], [4, 4, 5, 93, 2], [119, 4, 120, 93, 2]];
+const buildings=[{"id": "a1", "name": "대학본부", "code": "A1", "cat": "G", "icon": "🏛️", "gx": 61, "gy": 53, "w": 4, "d": 3, "h": 108, "solar": false, "top": "#d8def0", "l": "#8f9ed0", "r": "#b3bfe4", "roof": "#566190", "poi": "A1 대학본부 — 지배구조(G) 실천 거점입니다.", "kind": "build"}, {"id": "a2", "name": "약학대학", "code": "A2", "cat": "E", "icon": "💊", "gx": 55, "gy": 44, "w": 3, "d": 3, "h": 92, "solar": true, "top": "#cfeae0", "l": "#7fb8a8", "r": "#a6d2c4", "roof": "#3f7d6e", "poi": "A2 약학대학 — 환경(E) 실천 거점입니다.", "kind": "build"}, {"id": "a3", "name": "천연물신약연구소", "code": "A3", "cat": "E", "icon": "🧪", "gx": 53, "gy": 47, "w": 3, "d": 2, "h": 78, "solar": true, "top": "#cfeae0", "l": "#7fb8a8", "r": "#a6d2c4", "roof": "#3f7d6e", "poi": "A3 천연물신약연구소 — 환경(E) 실천 거점입니다.", "kind": "build"}, {"id": "a4", "name": "학생생활관 부속동", "code": "A4", "cat": "S", "icon": "🏠", "gx": 65, "gy": 62, "w": 2, "d": 2, "h": 66, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "A4 학생생활관 부속동 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "a5", "name": "학생생활관 진리관", "code": "A5", "cat": "S", "icon": "🏠", "gx": 71, "gy": 57, "w": 2, "d": 3, "h": 92, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "A5 학생생활관 진리관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "a6", "name": "학생생활관 창조관", "code": "A6", "cat": "S", "icon": "🏠", "gx": 66, "gy": 73, "w": 2, "d": 3, "h": 92, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "A6 학생생활관 창조관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "a7", "name": "학생생활관 관리동", "code": "A7", "cat": "S", "icon": "🏠", "gx": 69, "gy": 67, "w": 2, "d": 2, "h": 66, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "A7 학생생활관 관리동 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "a8", "name": "학생생활관 향림관", "code": "A8", "cat": "S", "icon": "🏠", "gx": 79, "gy": 66, "w": 2, "d": 3, "h": 92, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "A8 학생생활관 향림관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "a9", "name": "학생생활관 청운관", "code": "A9", "cat": "S", "icon": "🏠", "gx": 78, "gy": 76, "w": 2, "d": 3, "h": 92, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "A9 학생생활관 청운관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "a10", "name": "인재관", "code": "A10", "cat": "S", "icon": "🎓", "gx": 73, "gy": 79, "w": 2, "d": 2, "h": 78, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "A10 인재관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "a11", "name": "제2중앙공급실", "code": "A11", "cat": "G", "icon": "🔧", "gx": 71, "gy": 80, "w": 2, "d": 2, "h": 56, "solar": false, "top": "#d8def0", "l": "#8f9ed0", "r": "#b3bfe4", "roof": "#566190", "poi": "A11 제2중앙공급실 — 지배구조(G) 실천 거점입니다.", "kind": "build"}, {"id": "a12", "name": "우정원", "code": "A12", "cat": "S", "icon": "🏡", "gx": 75, "gy": 83, "w": 2, "d": 2, "h": 66, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "A12 우정원 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "a13", "name": "웅지관", "code": "A13", "cat": "S", "icon": "🏫", "gx": 86, "gy": 61, "w": 3, "d": 3, "h": 98, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "A13 웅지관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "a14", "name": "남문", "code": "A14", "cat": "S", "icon": "🚪", "gx": 87, "gy": 65, "w": 2, "d": 2, "h": 38, "solar": false, "top": "#e6ddc8", "l": "#b6a886", "r": "#cebfa0", "roof": "#7d6a48", "poi": "A14 남문 — 사회(S) 실천 거점입니다.", "kind": "gate"}, {"id": "a16", "name": "교직원테니스장", "code": "A16", "cat": "S", "icon": "🎾", "gx": 91, "gy": 50, "w": 3, "d": 2, "h": 14, "solar": false, "top": "#7fae5e", "l": "#5f8a46", "r": "#6fa052", "roof": "#4d7038", "poi": "A16 교직원테니스장 — 사회(S) 실천 거점입니다.", "kind": "court"}, {"id": "a17", "name": "체육관", "code": "A17", "cat": "S", "icon": "🏟️", "gx": 88, "gy": 40, "w": 3, "d": 3, "h": 68, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "A17 체육관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "a18", "name": "체육관 증축동", "code": "A18", "cat": "S", "icon": "🏟️", "gx": 92, "gy": 45, "w": 2, "d": 2, "h": 52, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "A18 체육관 증축동 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "a19", "name": "정문", "code": "A19", "cat": "S", "icon": "🚪", "gx": 78, "gy": 30, "w": 3, "d": 2, "h": 40, "solar": false, "top": "#e6ddc8", "l": "#b6a886", "r": "#cebfa0", "roof": "#7d6a48", "poi": "A19 정문 — 사회(S) 실천 거점입니다.", "kind": "gate"}, {"id": "b1", "name": "박물관", "code": "B1", "cat": "S", "icon": "🏺", "gx": 62, "gy": 24, "w": 3, "d": 3, "h": 78, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "B1 박물관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "b2", "name": "70주년기념관", "code": "B2", "cat": "S", "icon": "🏛️", "gx": 56, "gy": 29, "w": 3, "d": 3, "h": 88, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "B2 70주년기념관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "b3", "name": "생명산업과학대학1호관", "code": "B3", "cat": "E", "icon": "🌾", "gx": 48, "gy": 21, "w": 4, "d": 3, "h": 98, "solar": true, "top": "#cfeae0", "l": "#7fb8a8", "r": "#a6d2c4", "roof": "#3f7d6e", "poi": "B3 생명산업과학대학1호관 — 환경(E) 실천 거점입니다.", "kind": "build"}, {"id": "b4", "name": "생명산업과학대학2호관", "code": "B4", "cat": "E", "icon": "🌾", "gx": 44, "gy": 30, "w": 3, "d": 3, "h": 92, "solar": true, "top": "#cfeae0", "l": "#7fb8a8", "r": "#a6d2c4", "roof": "#3f7d6e", "poi": "B4 생명산업과학대학2호관 — 환경(E) 실천 거점입니다.", "kind": "build"}, {"id": "b5", "name": "생명과학 온실", "code": "B5", "cat": "E", "icon": "🪴", "gx": 42, "gy": 26, "w": 3, "d": 2, "h": 38, "solar": false, "top": "#cfeae0", "l": "#7fb8a8", "r": "#a6d2c4", "roof": "#3f7d6e", "poi": "B5 생명과학 온실 — 환경(E) 실천 거점입니다.", "kind": "build"}, {"id": "b6", "name": "제1중앙공급실", "code": "B6", "cat": "G", "icon": "🔧", "gx": 36, "gy": 28, "w": 2, "d": 2, "h": 56, "solar": false, "top": "#d8def0", "l": "#8f9ed0", "r": "#b3bfe4", "roof": "#566190", "poi": "B6 제1중앙공급실 — 지배구조(G) 실천 거점입니다.", "kind": "build"}, {"id": "b7", "name": "산학협력관", "code": "B7", "cat": "G", "icon": "🤝", "gx": 46, "gy": 8, "w": 4, "d": 3, "h": 88, "solar": false, "top": "#d8def0", "l": "#8f9ed0", "r": "#b3bfe4", "roof": "#566190", "poi": "B7 산학협력관 — 지배구조(G) 실천 거점입니다.", "kind": "build"}, {"id": "c1", "name": "중앙도서관", "code": "C1", "cat": "E", "icon": "📚", "gx": 34, "gy": 44, "w": 4, "d": 3, "h": 118, "solar": true, "top": "#cfeae0", "l": "#7fb8a8", "r": "#a6d2c4", "roof": "#3f7d6e", "poi": "C1 중앙도서관 — 환경(E) 실천 거점입니다.", "kind": "build"}, {"id": "c2", "name": "친환경농업센터", "code": "C2", "cat": "E", "icon": "🌱", "gx": 28, "gy": 30, "w": 3, "d": 2, "h": 72, "solar": true, "top": "#cfeae0", "l": "#7fb8a8", "r": "#a6d2c4", "roof": "#3f7d6e", "poi": "C2 친환경농업센터 — 환경(E) 실천 거점입니다.", "kind": "build"}, {"id": "c3", "name": "공동실험실습관", "code": "C3", "cat": "E", "icon": "🔬", "gx": 23, "gy": 33, "w": 3, "d": 2, "h": 78, "solar": true, "top": "#cfeae0", "l": "#7fb8a8", "r": "#a6d2c4", "roof": "#3f7d6e", "poi": "C3 공동실험실습관 — 환경(E) 실천 거점입니다.", "kind": "build"}, {"id": "c4", "name": "환경친화형물질공장기술혁신센터", "code": "C4", "cat": "E", "icon": "🏭", "gx": 23, "gy": 29, "w": 3, "d": 2, "h": 72, "solar": true, "top": "#cfeae0", "l": "#7fb8a8", "r": "#a6d2c4", "roof": "#3f7d6e", "poi": "C4 환경친화형물질공장기술혁신센터 — 환경(E) 실천 거점입니다.", "kind": "build"}, {"id": "c5", "name": "어린이집", "code": "C5", "cat": "S", "icon": "🧸", "gx": 17, "gy": 28, "w": 2, "d": 2, "h": 52, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "C5 어린이집 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "c6", "name": "북문", "code": "C6", "cat": "S", "icon": "🚪", "gx": 14, "gy": 29, "w": 2, "d": 2, "h": 38, "solar": false, "top": "#e6ddc8", "l": "#b6a886", "r": "#cebfa0", "roof": "#7d6a48", "poi": "C6 북문 — 사회(S) 실천 거점입니다.", "kind": "gate"}, {"id": "d1", "name": "창업보육센터", "code": "D1", "cat": "G", "icon": "🚀", "gx": 16, "gy": 35, "w": 3, "d": 2, "h": 80, "solar": false, "top": "#d8def0", "l": "#8f9ed0", "r": "#b3bfe4", "roof": "#566190", "poi": "D1 창업보육센터 — 지배구조(G) 실천 거점입니다.", "kind": "build"}, {"id": "d2", "name": "공과대학1호관", "code": "D2", "cat": "G", "icon": "⚙️", "gx": 11, "gy": 40, "w": 3, "d": 3, "h": 108, "solar": false, "top": "#d8def0", "l": "#8f9ed0", "r": "#b3bfe4", "roof": "#566190", "poi": "D2 공과대학1호관 — 지배구조(G) 실천 거점입니다.", "kind": "build"}, {"id": "d3", "name": "공과대학2호관", "code": "D3", "cat": "G", "icon": "⚙️", "gx": 19, "gy": 56, "w": 3, "d": 3, "h": 108, "solar": false, "top": "#d8def0", "l": "#8f9ed0", "r": "#b3bfe4", "roof": "#566190", "poi": "D3 공과대학2호관 — 지배구조(G) 실천 거점입니다.", "kind": "build"}, {"id": "d4", "name": "공과대학3호관", "code": "D4", "cat": "G", "icon": "⚙️", "gx": 10, "gy": 60, "w": 4, "d": 3, "h": 118, "solar": false, "top": "#d8def0", "l": "#8f9ed0", "r": "#b3bfe4", "roof": "#566190", "poi": "D4 공과대학3호관 — 지배구조(G) 실천 거점입니다.", "kind": "build"}, {"id": "d5", "name": "학군단", "code": "D5", "cat": "G", "icon": "🎖️", "gx": 8, "gy": 48, "w": 2, "d": 2, "h": 58, "solar": false, "top": "#d8def0", "l": "#8f9ed0", "r": "#b3bfe4", "roof": "#566190", "poi": "D5 학군단 — 지배구조(G) 실천 거점입니다.", "kind": "build"}, {"id": "e1", "name": "학생회관", "code": "E1", "cat": "S", "icon": "🏫", "gx": 44, "gy": 51, "w": 3, "d": 3, "h": 92, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "E1 학생회관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "e2", "name": "기초교육관", "code": "E2", "cat": "S", "icon": "📖", "gx": 53, "gy": 66, "w": 3, "d": 3, "h": 98, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "E2 기초교육관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "e3", "name": "사범대학1호관", "code": "E3", "cat": "S", "icon": "🎒", "gx": 33, "gy": 57, "w": 3, "d": 3, "h": 98, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "E3 사범대학1호관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "e4", "name": "사범대학2호관", "code": "E4", "cat": "S", "icon": "🎒", "gx": 30, "gy": 52, "w": 3, "d": 3, "h": 98, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "E4 사범대학2호관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "e5", "name": "사범대학3호관", "code": "E5", "cat": "S", "icon": "🎒", "gx": 43, "gy": 69, "w": 3, "d": 3, "h": 98, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "E5 사범대학3호관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "e6", "name": "미래창조관", "code": "E6", "cat": "G", "icon": "💡", "gx": 61, "gy": 80, "w": 3, "d": 3, "h": 104, "solar": false, "top": "#d8def0", "l": "#8f9ed0", "r": "#b3bfe4", "roof": "#566190", "poi": "E6 미래창조관 — 지배구조(G) 실천 거점입니다.", "kind": "build"}, {"id": "e7", "name": "사회과학대학", "code": "E7", "cat": "S", "icon": "⚖️", "gx": 52, "gy": 85, "w": 4, "d": 3, "h": 108, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "E7 사회과학대학 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "e8", "name": "인문예술대학", "code": "E8", "cat": "S", "icon": "🎨", "gx": 32, "gy": 73, "w": 4, "d": 3, "h": 108, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "E8 인문예술대학 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "f1", "name": "국제문화컨벤션관", "code": "F1", "cat": "S", "icon": "🎪", "gx": 106, "gy": 53, "w": 4, "d": 3, "h": 90, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "F1 국제문화컨벤션관 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "f2", "name": "평생교육원", "code": "F2", "cat": "S", "icon": "📚", "gx": 102, "gy": 55, "w": 3, "d": 3, "h": 88, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "F2 평생교육원 — 사회(S) 실천 거점입니다.", "kind": "build"}, {"id": "f3", "name": "학생테니스장", "code": "F3", "cat": "S", "icon": "🎾", "gx": 105, "gy": 63, "w": 3, "d": 2, "h": 14, "solar": false, "top": "#7fae5e", "l": "#5f8a46", "r": "#6fa052", "roof": "#4d7038", "poi": "F3 학생테니스장 — 사회(S) 실천 거점입니다.", "kind": "court"}, {"id": "f4", "name": "연립관사", "code": "F4", "cat": "S", "icon": "🏘️", "gx": 112, "gy": 69, "w": 3, "d": 2, "h": 68, "solar": false, "top": "#f7d9e2", "l": "#d68fa6", "r": "#e8b4c4", "roof": "#a8506a", "poi": "F4 연립관사 — 사회(S) 실천 거점입니다.", "kind": "build"}];
+const npcs=[{"id": "chong", "name": "총장님", "kind": "G", "img": "chong", "gx": 60, "gy": 57, "sc": 0.92}, {"id": "cheri", "name": "체리니", "kind": "S", "img": "cheri", "gx": 44, "gy": 50, "sc": 0.86}, {"id": "usong", "name": "우송이", "kind": "E", "img": "usong", "gx": 33, "gy": 48, "sc": 0.88}];
+const sdg=[{"gx": 38, "gy": 45, "n": 4, "c": "#C5192D", "label": "양질의 교육"}, {"gx": 28, "gy": 33, "n": 15, "c": "#56C02B", "label": "육상 생태"}, {"gx": 45, "gy": 33, "n": 2, "c": "#DDA63A", "label": "기아 종식"}, {"gx": 10, "gy": 43, "n": 9, "c": "#FD6925", "label": "산업·혁신"}, {"gx": 46, "gy": 47, "n": 11, "c": "#FD9D24", "label": "지속가능 도시"}, {"gx": 65, "gy": 53, "n": 16, "c": "#00689D", "label": "제도·정의"}];
+const DECOR=[{"t": "tree", "gx": 48, "gy": 49, "r": 0.15084917392450192}, {"t": "tree", "gx": 88, "gy": 50, "r": 0.5358820043066892}, {"t": "tree", "gx": 46, "gy": 48, "r": 0.057998924774706806}, {"t": "tree", "gx": 86, "gy": 49, "r": 0.4336456836623859}, {"t": "tree", "gx": 87, "gy": 48, "r": 0.09071301334386506}, {"t": "tree", "gx": 13, "gy": 49, "r": 0.8268521246720381}, {"t": "tree", "gx": 14, "gy": 48, "r": 0.22323896460701453}, {"t": "tree", "gx": 43, "gy": 48, "r": 0.9762551055929201}, {"t": "tree", "gx": 42, "gy": 49, "r": 0.8584684590486795}, {"t": "tree", "gx": 43, "gy": 48, "r": 0.14425508335743753}, {"t": "tree", "gx": 45, "gy": 49, "r": 0.30848182410193437}, {"t": "tree", "gx": 46, "gy": 48, "r": 0.5816001636624663}, {"t": "tree", "gx": 50, "gy": 49, "r": 0.5477444657095578}, {"t": "tree", "gx": 49, "gy": 50, "r": 0.05960116996623266}, {"t": "tree", "gx": 90, "gy": 61, "r": 0.6803999731817859}, {"t": "tree", "gx": 103, "gy": 66, "r": 0.3141471703767915}, {"t": "tree", "gx": 103, "gy": 66, "r": 0.29976699686368236}, {"t": "tree", "gx": 4, "gy": 3, "r": 0.574423710258671}, {"t": "tree", "gx": 4, "gy": 91, "r": 0.9801748474925821}, {"t": "tree", "gx": 120, "gy": 94, "r": 0.4181228217852272}, {"t": "tree", "gx": 6, "gy": 93, "r": 0.4889631004758056}, {"t": "tree", "gx": 4, "gy": 3, "r": 0.6682158565343952}, {"t": "tree", "gx": 119, "gy": 3, "r": 0.6952953662736593}, {"t": "tree", "gx": 76, "gy": 60, "r": 0.06876294940686056}, {"t": "tree", "gx": 13, "gy": 36, "r": 0.47409833741964447}, {"t": "tree", "gx": 87, "gy": 10, "r": 0.060669427597219716}, {"t": "tree", "gx": 84, "gy": 75, "r": 0.9930959394666341}, {"t": "tree", "gx": 107, "gy": 59, "r": 0.28459553209414923}, {"t": "tree", "gx": 122, "gy": 61, "r": 0.355464109540346}, {"t": "tree", "gx": 80, "gy": 16, "r": 0.49369299455698146}, {"t": "tree", "gx": 29, "gy": 38, "r": 0.12934022201868423}, {"t": "tree", "gx": 12, "gy": 23, "r": 0.44918740094933096}, {"t": "tree", "gx": 72, "gy": 37, "r": 0.8833838264415125}, {"t": "tree", "gx": 106, "gy": 57, "r": 0.8639844696985152}, {"t": "tree", "gx": 31, "gy": 21, "r": 0.08298469466133207}, {"t": "tree", "gx": 21, "gy": 31, "r": 0.6585166769723302}, {"t": "tree", "gx": 3, "gy": 64, "r": 0.8310935615682863}, {"t": "tree", "gx": 38, "gy": 2, "r": 0.14567639245798059}, {"t": "tree", "gx": 80, "gy": 74, "r": 0.31861168111188654}, {"t": "tree", "gx": 18, "gy": 90, "r": 0.8592019492051857}, {"t": "tree", "gx": 81, "gy": 85, "r": 0.6762000824495014}, {"t": "tree", "gx": 8, "gy": 60, "r": 0.8995330100579522}, {"t": "tree", "gx": 101, "gy": 89, "r": 0.7978731211965661}, {"t": "tree", "gx": 52, "gy": 52, "r": 0.398978832320273}, {"t": "tree", "gx": 15, "gy": 63, "r": 0.634289565685709}, {"t": "tree", "gx": 9, "gy": 26, "r": 0.06734761584302484}, {"t": "tree", "gx": 28, "gy": 58, "r": 0.1623031877720974}, {"t": "tree", "gx": 45, "gy": 78, "r": 0.05257560389026694}, {"t": "tree", "gx": 2, "gy": 74, "r": 0.15126493227942794}, {"t": "tree", "gx": 11, "gy": 28, "r": 0.6140689877884787}, {"t": "tree", "gx": 21, "gy": 83, "r": 0.2522577565570773}, {"t": "tree", "gx": 46, "gy": 79, "r": 0.36416343952828245}, {"t": "tree", "gx": 17, "gy": 16, "r": 0.8489369264846149}, {"t": "tree", "gx": 61, "gy": 63, "r": 0.48383465641626944}, {"t": "tree", "gx": 12, "gy": 20, "r": 0.10218761674816845}, {"t": "tree", "gx": 45, "gy": 35, "r": 0.4786219435099912}, {"t": "tree", "gx": 90, "gy": 22, "r": 0.5163345189623215}, {"t": "tree", "gx": 28, "gy": 69, "r": 0.36175245900901054}, {"t": "tree", "gx": 90, "gy": 71, "r": 0.9141457827913946}, {"t": "tree", "gx": 99, "gy": 69, "r": 0.29808969034627997}, {"t": "tree", "gx": 84, "gy": 13, "r": 0.6961967859078019}, {"t": "tree", "gx": 35, "gy": 68, "r": 0.36669979176117884}, {"t": "tree", "gx": 23, "gy": 47, "r": 0.7719379084020312}, {"t": "tree", "gx": 70, "gy": 71, "r": 0.7790548913381772}, {"t": "tree", "gx": 44, "gy": 83, "r": 0.22304167310318512}, {"t": "tree", "gx": 105, "gy": 26, "r": 0.8060785847856675}, {"t": "tree", "gx": 96, "gy": 31, "r": 0.19991798339514966}, {"t": "tree", "gx": 65, "gy": 47, "r": 0.7310039924754212}, {"t": "tree", "gx": 62, "gy": 35, "r": 0.19364494601280935}, {"t": "tree", "gx": 59, "gy": 94, "r": 0.9880380582028602}, {"t": "tree", "gx": 48, "gy": 12, "r": 0.22046232299623747}, {"t": "tree", "gx": 31, "gy": 62, "r": 0.19670616341931724}, {"t": "tree", "gx": 28, "gy": 63, "r": 0.6240663974378182}, {"t": "tree", "gx": 117, "gy": 80, "r": 0.8404355272792898}, {"t": "tree", "gx": 63, "gy": 85, "r": 0.34400690197679207}, {"t": "tree", "gx": 84, "gy": 12, "r": 0.834648807798219}, {"t": "tree", "gx": 17, "gy": 51, "r": 0.78230288409809}, {"t": "tree", "gx": 98, "gy": 27, "r": 0.47803274459400025}, {"t": "tree", "gx": 24, "gy": 57, "r": 0.7891354310202764}, {"t": "tree", "gx": 44, "gy": 13, "r": 0.800823568896691}, {"t": "tree", "gx": 97, "gy": 12, "r": 0.7247986656342152}, {"t": "tree", "gx": 23, "gy": 18, "r": 0.027548850708832506}, {"t": "tree", "gx": 77, "gy": 61, "r": 0.8065019820321961}, {"t": "tree", "gx": 20, "gy": 80, "r": 0.8265104785253871}, {"t": "tree", "gx": 62, "gy": 86, "r": 0.9374675106287562}, {"t": "tree", "gx": 21, "gy": 72, "r": 0.5482855597956765}, {"t": "tree", "gx": 104, "gy": 94, "r": 0.6496746696738306}, {"t": "tree", "gx": 69, "gy": 19, "r": 0.4338094367574856}, {"t": "tree", "gx": 113, "gy": 26, "r": 0.8261552518152211}, {"t": "tree", "gx": 34, "gy": 29, "r": 0.29296665267021893}, {"t": "tree", "gx": 32, "gy": 77, "r": 0.3259893079054712}, {"t": "tree", "gx": 71, "gy": 55, "r": 0.8341949964394694}, {"t": "tree", "gx": 116, "gy": 60, "r": 0.6624748303245661}, {"t": "tree", "gx": 106, "gy": 68, "r": 0.42062827070906517}, {"t": "tree", "gx": 18, "gy": 70, "r": 0.15183638426293866}, {"t": "tree", "gx": 113, "gy": 58, "r": 0.7765061570935539}, {"t": "tree", "gx": 79, "gy": 2, "r": 0.776038965576667}, {"t": "tree", "gx": 21, "gy": 24, "r": 0.14155897105852455}, {"t": "tree", "gx": 81, "gy": 94, "r": 0.1203366112446459}, {"t": "tree", "gx": 9, "gy": 43, "r": 0.682331364738559}, {"t": "tree", "gx": 69, "gy": 73, "r": 0.4824870138188635}, {"t": "tree", "gx": 101, "gy": 15, "r": 0.8832278144381652}, {"t": "tree", "gx": 9, "gy": 33, "r": 0.1913061311611315}, {"t": "tree", "gx": 7, "gy": 14, "r": 0.5077139917923206}, {"t": "tree", "gx": 99, "gy": 10, "r": 0.44324839357743884}, {"t": "tree", "gx": 27, "gy": 90, "r": 0.2771855402912631}, {"t": "tree", "gx": 67, "gy": 70, "r": 0.8073621427866542}, {"t": "tree", "gx": 66, "gy": 33, "r": 0.6992178821802858}, {"t": "tree", "gx": 114, "gy": 35, "r": 0.9227842134201064}, {"t": "tree", "gx": 116, "gy": 27, "r": 0.8399997833932058}, {"t": "tree", "gx": 17, "gy": 52, "r": 0.4421180882750436}, {"t": "tree", "gx": 11, "gy": 87, "r": 0.24063875845326987}, {"t": "tree", "gx": 11, "gy": 29, "r": 0.6694721453098957}, {"t": "tree", "gx": 102, "gy": 17, "r": 0.8970264328787668}, {"t": "tree", "gx": 84, "gy": 86, "r": 0.36618328946068135}, {"t": "tree", "gx": 34, "gy": 19, "r": 0.9675447826663839}, {"t": "tree", "gx": 30, "gy": 14, "r": 0.3982568747172719}, {"t": "tree", "gx": 64, "gy": 22, "r": 0.9898714547442865}, {"t": "tree", "gx": 108, "gy": 30, "r": 0.16146605988087914}, {"t": "tree", "gx": 57, "gy": 67, "r": 0.40380975111660466}, {"t": "tree", "gx": 55, "gy": 27, "r": 0.35661479323003864}, {"t": "tree", "gx": 13, "gy": 94, "r": 0.3659525142571548}, {"t": "tree", "gx": 60, "gy": 58, "r": 0.7031513751900343}, {"t": "tree", "gx": 51, "gy": 44, "r": 0.5174338566059401}, {"t": "tree", "gx": 39, "gy": 67, "r": 0.9607747127435415}, {"t": "tree", "gx": 114, "gy": 15, "r": 0.0840612669703682}, {"t": "tree", "gx": 36, "gy": 7, "r": 0.9058986885770963}, {"t": "tree", "gx": 25, "gy": 36, "r": 0.7557765478607681}, {"t": "tree", "gx": 110, "gy": 88, "r": 0.8189789797812816}, {"t": "tree", "gx": 35, "gy": 53, "r": 0.14936794740407822}, {"t": "tree", "gx": 75, "gy": 65, "r": 0.7004174465466179}, {"t": "tree", "gx": 13, "gy": 37, "r": 0.05752651244094631}, {"t": "tree", "gx": 90, "gy": 25, "r": 0.42531704079572263}, {"t": "tree", "gx": 11, "gy": 36, "r": 0.9383497090401628}, {"t": "tree", "gx": 83, "gy": 13, "r": 0.8016285915713898}, {"t": "tree", "gx": 12, "gy": 79, "r": 0.8562286363721489}, {"t": "tree", "gx": 10, "gy": 35, "r": 0.8627749690538462}, {"t": "tree", "gx": 60, "gy": 3, "r": 0.3391517772846362}, {"t": "tree", "gx": 72, "gy": 55, "r": 0.9266692840712272}, {"t": "tree", "gx": 36, "gy": 81, "r": 0.12922479989532887}, {"t": "tree", "gx": 32, "gy": 16, "r": 0.9692128163684092}, {"t": "tree", "gx": 35, "gy": 8, "r": 0.18114596755629953}, {"t": "tree", "gx": 121, "gy": 41, "r": 0.6286710970476671}, {"t": "tree", "gx": 69, "gy": 28, "r": 0.2899608347243582}, {"t": "tree", "gx": 66, "gy": 88, "r": 0.17789988421292868}, {"t": "tree", "gx": 34, "gy": 6, "r": 0.015346117455019681}, {"t": "tree", "gx": 72, "gy": 26, "r": 0.5142349114623713}, {"t": "tree", "gx": 15, "gy": 86, "r": 0.8189201403417139}, {"t": "tree", "gx": 57, "gy": 86, "r": 0.4950015734576154}, {"t": "tree", "gx": 66, "gy": 41, "r": 0.6877417356906914}, {"t": "tree", "gx": 31, "gy": 45, "r": 0.19862448299144608}, {"t": "tree", "gx": 95, "gy": 83, "r": 0.1397188112489708}, {"t": "tree", "gx": 109, "gy": 18, "r": 0.014255129327794935}, {"t": "tree", "gx": 82, "gy": 34, "r": 0.43074070783888185}, {"t": "tree", "gx": 9, "gy": 12, "r": 0.6652276802157534}, {"t": "tree", "gx": 50, "gy": 66, "r": 0.6705432979086785}, {"t": "tree", "gx": 38, "gy": 78, "r": 0.24221293399248656}, {"t": "tree", "gx": 39, "gy": 7, "r": 0.45945294339472076}, {"t": "tree", "gx": 22, "gy": 36, "r": 0.44582460823374026}, {"t": "tree", "gx": 35, "gy": 48, "r": 0.9617865333626133}, {"t": "tree", "gx": 72, "gy": 43, "r": 0.24444649394189355}, {"t": "tree", "gx": 114, "gy": 41, "r": 0.2178658571584814}, {"t": "tree", "gx": 25, "gy": 2, "r": 0.33533278391977106}, {"t": "tree", "gx": 37, "gy": 66, "r": 0.6560178712083403}, {"t": "tree", "gx": 33, "gy": 66, "r": 0.7762380764257202}, {"t": "tree", "gx": 13, "gy": 35, "r": 0.8170442811381324}, {"t": "tree", "gx": 20, "gy": 53, "r": 0.5868007320289832}, {"t": "tree", "gx": 40, "gy": 40, "r": 0.6296698766411063}, {"t": "tree", "gx": 12, "gy": 76, "r": 0.9576371798603948}, {"t": "tree", "gx": 111, "gy": 21, "r": 0.6575436733126727}, {"t": "tree", "gx": 93, "gy": 78, "r": 0.38951647106044995}, {"t": "tree", "gx": 43, "gy": 94, "r": 0.9847290850742962}, {"t": "tree", "gx": 21, "gy": 38, "r": 0.7241557733618257}, {"t": "tree", "gx": 84, "gy": 20, "r": 0.04378806669158586}, {"t": "tree", "gx": 116, "gy": 67, "r": 0.6273321243319265}, {"t": "tree", "gx": 95, "gy": 91, "r": 0.812218915712394}, {"t": "tree", "gx": 19, "gy": 69, "r": 0.7528671585349072}, {"t": "tree", "gx": 107, "gy": 89, "r": 0.5840615168062387}, {"t": "tree", "gx": 89, "gy": 90, "r": 0.6428897994007223}, {"t": "tree", "gx": 7, "gy": 19, "r": 0.6371198770456572}, {"t": "tree", "gx": 108, "gy": 59, "r": 0.5585272464959347}, {"t": "tree", "gx": 82, "gy": 70, "r": 0.6806641760808205}, {"t": "tree", "gx": 64, "gy": 35, "r": 0.0033143271278479602}, {"t": "tree", "gx": 104, "gy": 10, "r": 0.7482653702237058}, {"t": "tree", "gx": 66, "gy": 70, "r": 0.09194192781522481}, {"t": "tree", "gx": 69, "gy": 10, "r": 0.74572790963045}, {"t": "tree", "gx": 62, "gy": 34, "r": 0.8092187797609716}, {"t": "tree", "gx": 110, "gy": 35, "r": 0.23478562183182705}, {"t": "tree", "gx": 98, "gy": 28, "r": 0.23073612704745372}, {"t": "tree", "gx": 118, "gy": 89, "r": 0.2873191667122401}, {"t": "tree", "gx": 7, "gy": 80, "r": 0.6327928427067621}, {"t": "tree", "gx": 27, "gy": 11, "r": 0.5997052725212654}, {"t": "tree", "gx": 44, "gy": 34, "r": 0.6515343617142532}, {"t": "tree", "gx": 81, "gy": 74, "r": 0.1334410087203175}, {"t": "tree", "gx": 63, "gy": 9, "r": 0.4857980479953643}, {"t": "tree", "gx": 88, "gy": 14, "r": 0.692185172570448}, {"t": "tree", "gx": 68, "gy": 38, "r": 0.46466285337431434}, {"t": "tree", "gx": 61, "gy": 17, "r": 0.9933004073326507}, {"t": "tree", "gx": 72, "gy": 27, "r": 0.3116746617713998}, {"t": "tree", "gx": 60, "gy": 11, "r": 0.8198976926998682}, {"t": "tree", "gx": 59, "gy": 36, "r": 0.38684834696231196}, {"t": "tree", "gx": 11, "gy": 76, "r": 0.0903030942510118}, {"t": "tree", "gx": 97, "gy": 69, "r": 0.26180896872833614}, {"t": "tree", "gx": 48, "gy": 18, "r": 0.6033657403306439}, {"t": "tree", "gx": 82, "gy": 67, "r": 0.2795678964768511}, {"t": "tree", "gx": 22, "gy": 2, "r": 0.9499595723427542}, {"t": "tree", "gx": 53, "gy": 40, "r": 0.7271827693336249}, {"t": "tree", "gx": 50, "gy": 42, "r": 0.12090935439043515}, {"t": "tree", "gx": 44, "gy": 2, "r": 0.32454758696804964}, {"t": "tree", "gx": 93, "gy": 3, "r": 0.9015665630989359}, {"t": "tree", "gx": 39, "gy": 34, "r": 0.37222199935449174}, {"t": "tree", "gx": 52, "gy": 51, "r": 0.9987925057856136}, {"t": "tree", "gx": 77, "gy": 11, "r": 0.36070932392340516}, {"t": "tree", "gx": 56, "gy": 37, "r": 0.8542552668472237}, {"t": "tree", "gx": 37, "gy": 15, "r": 0.05161751683560001}, {"t": "tree", "gx": 86, "gy": 38, "r": 0.6349634970396003}, {"t": "tree", "gx": 21, "gy": 33, "r": 0.9710385968217851}, {"t": "tree", "gx": 100, "gy": 49, "r": 0.7851426747155581}, {"t": "tree", "gx": 105, "gy": 82, "r": 0.4000416615115395}, {"t": "tree", "gx": 114, "gy": 72, "r": 0.5492281481879637}, {"t": "tree", "gx": 94, "gy": 12, "r": 0.049476034443567296}, {"t": "tree", "gx": 95, "gy": 54, "r": 0.45086042296077355}, {"t": "tree", "gx": 98, "gy": 19, "r": 0.6444907104185137}, {"t": "tree", "gx": 38, "gy": 64, "r": 0.04897690498758278}, {"t": "tree", "gx": 18, "gy": 23, "r": 0.4721840874468285}, {"t": "tree", "gx": 45, "gy": 38, "r": 0.29777186554478685}, {"t": "tree", "gx": 96, "gy": 85, "r": 0.26016905461407647}, {"t": "tree", "gx": 85, "gy": 32, "r": 0.300836291038856}, {"t": "tree", "gx": 73, "gy": 87, "r": 0.39436777770327414}, {"t": "tree", "gx": 23, "gy": 84, "r": 0.16165696140505814}, {"t": "tree", "gx": 28, "gy": 66, "r": 0.9059599102424573}, {"t": "tree", "gx": 30, "gy": 59, "r": 0.9062593902113605}, {"t": "tree", "gx": 99, "gy": 59, "r": 0.42742302372750685}, {"t": "tree", "gx": 33, "gy": 13, "r": 0.17469509200718425}, {"t": "tree", "gx": 73, "gy": 13, "r": 0.31928774147575034}, {"t": "tree", "gx": 105, "gy": 74, "r": 0.20214184289612958}, {"t": "tree", "gx": 51, "gy": 54, "r": 0.7458405459237705}, {"t": "tree", "gx": 98, "gy": 9, "r": 0.49814589528379094}, {"t": "tree", "gx": 18, "gy": 89, "r": 0.503395747611118}, {"t": "tree", "gx": 82, "gy": 29, "r": 0.09259815716013964}, {"t": "tree", "gx": 116, "gy": 33, "r": 0.3845607593637491}, {"t": "tree", "gx": 84, "gy": 59, "r": 0.4318366866852609}, {"t": "tree", "gx": 18, "gy": 6, "r": 0.4251998790317161}, {"t": "tree", "gx": 99, "gy": 62, "r": 0.9682812659977115}, {"t": "tree", "gx": 64, "gy": 2, "r": 0.07313788228870244}, {"t": "tree", "gx": 121, "gy": 69, "r": 0.8554626738142327}, {"t": "tree", "gx": 59, "gy": 33, "r": 0.7831071846861094}, {"t": "tree", "gx": 30, "gy": 21, "r": 0.15206823887203336}, {"t": "tree", "gx": 89, "gy": 15, "r": 0.9414905594691287}, {"t": "tree", "gx": 94, "gy": 91, "r": 0.6473481196650006}, {"t": "tree", "gx": 99, "gy": 60, "r": 0.085003380116082}, {"t": "tree", "gx": 101, "gy": 7, "r": 0.001366039978702438}, {"t": "tree", "gx": 18, "gy": 31, "r": 0.5693822869652517}, {"t": "tree", "gx": 6, "gy": 84, "r": 0.7150216274245251}, {"t": "tree", "gx": 18, "gy": 82, "r": 0.2517939472813393}, {"t": "tree", "gx": 83, "gy": 57, "r": 0.6985819173145595}, {"t": "tree", "gx": 16, "gy": 14, "r": 0.07035190835855365}, {"t": "tree", "gx": 69, "gy": 76, "r": 0.19170176526965155}, {"t": "tree", "gx": 103, "gy": 78, "r": 0.001152023751002762}, {"t": "tree", "gx": 70, "gy": 40, "r": 0.9963740517250494}, {"t": "tree", "gx": 37, "gy": 42, "r": 0.6445756393627167}, {"t": "tree", "gx": 115, "gy": 33, "r": 0.4753042200675436}, {"t": "tree", "gx": 85, "gy": 41, "r": 0.05530871467133891}, {"t": "tree", "gx": 26, "gy": 65, "r": 0.8848485251848642}, {"t": "tree", "gx": 84, "gy": 55, "r": 0.08109206897956223}, {"t": "tree", "gx": 31, "gy": 87, "r": 0.4243224034097852}, {"t": "tree", "gx": 65, "gy": 6, "r": 0.6958227853331831}, {"t": "tree", "gx": 93, "gy": 55, "r": 0.36231989176993573}, {"t": "tree", "gx": 52, "gy": 27, "r": 0.006753465511383228}, {"t": "tree", "gx": 39, "gy": 66, "r": 0.0674324572475149}, {"t": "tree", "gx": 31, "gy": 61, "r": 0.2214428131656494}, {"t": "tree", "gx": 99, "gy": 39, "r": 0.10900806599800938}, {"t": "tree", "gx": 80, "gy": 25, "r": 0.8964761810252379}, {"t": "tree", "gx": 118, "gy": 87, "r": 0.05641707739801183}, {"t": "tree", "gx": 78, "gy": 20, "r": 0.9219235434640942}, {"t": "tree", "gx": 8, "gy": 29, "r": 0.023628718958196737}, {"t": "tree", "gx": 55, "gy": 8, "r": 0.7098585893223825}, {"t": "tree", "gx": 25, "gy": 52, "r": 0.4496419645709351}, {"t": "tree", "gx": 93, "gy": 42, "r": 0.7327237659186538}, {"t": "tree", "gx": 25, "gy": 85, "r": 0.9358815515398798}, {"t": "tree", "gx": 97, "gy": 61, "r": 0.03189368778338386}, {"t": "tree", "gx": 87, "gy": 94, "r": 0.3786194163495823}, {"t": "tree", "gx": 58, "gy": 23, "r": 0.10895763339751008}, {"t": "tree", "gx": 12, "gy": 37, "r": 0.08076297008594013}, {"t": "tree", "gx": 55, "gy": 17, "r": 0.5611289140900314}, {"t": "tree", "gx": 99, "gy": 28, "r": 0.3801296901451737}, {"t": "tree", "gx": 100, "gy": 41, "r": 0.8220079824621696}, {"t": "tree", "gx": 57, "gy": 13, "r": 0.049257335851017214}, {"t": "tree", "gx": 49, "gy": 71, "r": 0.9195064190503023}, {"t": "tree", "gx": 26, "gy": 43, "r": 0.3642488623955831}, {"t": "tree", "gx": 116, "gy": 62, "r": 0.030282055077419545}, {"t": "tree", "gx": 54, "gy": 33, "r": 0.8118245275721572}, {"t": "tree", "gx": 100, "gy": 53, "r": 0.04064948391592249}, {"t": "tree", "gx": 6, "gy": 61, "r": 0.0625799432645594}, {"t": "tree", "gx": 34, "gy": 26, "r": 0.7472868044886867}, {"t": "tree", "gx": 117, "gy": 79, "r": 0.33906953307222043}, {"t": "tree", "gx": 80, "gy": 7, "r": 0.26217247356800644}, {"t": "tree", "gx": 93, "gy": 90, "r": 0.3164836311655348}, {"t": "tree", "gx": 37, "gy": 40, "r": 0.0037716159341637523}, {"t": "tree", "gx": 98, "gy": 78, "r": 0.9164596036498125}, {"t": "tree", "gx": 83, "gy": 10, "r": 0.02425670494152843}, {"t": "tree", "gx": 31, "gy": 15, "r": 0.4751890578536032}, {"t": "tree", "gx": 61, "gy": 51, "r": 0.7897988576519996}, {"t": "tree", "gx": 118, "gy": 57, "r": 0.8148002512266773}, {"t": "tree", "gx": 18, "gy": 65, "r": 0.18293923146058}, {"t": "tree", "gx": 104, "gy": 40, "r": 0.8227552525111282}, {"t": "tree", "gx": 100, "gy": 21, "r": 0.6072542312453874}, {"t": "tree", "gx": 43, "gy": 42, "r": 0.4607811969657125}, {"t": "tree", "gx": 102, "gy": 78, "r": 0.079014871358013}, {"t": "tree", "gx": 27, "gy": 52, "r": 0.7528856706614597}, {"t": "tree", "gx": 10, "gy": 85, "r": 0.03386371941633448}, {"t": "tree", "gx": 72, "gy": 71, "r": 0.32575835407296105}, {"t": "tree", "gx": 56, "gy": 15, "r": 0.9878238295925039}, {"t": "tree", "gx": 35, "gy": 81, "r": 0.0840825975562709}, {"t": "tree", "gx": 14, "gy": 55, "r": 0.49847526839697454}, {"t": "tree", "gx": 92, "gy": 59, "r": 0.17319186206308224}, {"t": "tree", "gx": 116, "gy": 88, "r": 0.23493331482989366}, {"t": "tree", "gx": 70, "gy": 87, "r": 0.7595666432467455}, {"t": "tree", "gx": 101, "gy": 39, "r": 0.29378214686659654}, {"t": "tree", "gx": 74, "gy": 36, "r": 0.37297103743297233}, {"t": "tree", "gx": 96, "gy": 35, "r": 0.199190090890212}, {"t": "tree", "gx": 33, "gy": 25, "r": 0.24534029689061643}, {"t": "tree", "gx": 115, "gy": 76, "r": 0.18825013433648585}, {"t": "tree", "gx": 34, "gy": 33, "r": 0.507324513243949}, {"t": "tree", "gx": 31, "gy": 85, "r": 0.808442891393173}, {"t": "tree", "gx": 6, "gy": 15, "r": 0.004492100140174871}, {"t": "tree", "gx": 115, "gy": 31, "r": 0.8405563641212668}, {"t": "tree", "gx": 7, "gy": 39, "r": 0.23289267807615266}, {"t": "tree", "gx": 8, "gy": 26, "r": 0.6004933116805938}, {"t": "tree", "gx": 107, "gy": 76, "r": 0.194161608294947}, {"t": "tree", "gx": 67, "gy": 24, "r": 0.4491138577687903}, {"t": "tree", "gx": 35, "gy": 87, "r": 0.9457020834560657}, {"t": "tree", "gx": 15, "gy": 83, "r": 0.5961470656820096}, {"t": "tree", "gx": 29, "gy": 6, "r": 0.36870855346334397}, {"t": "tree", "gx": 20, "gy": 7, "r": 0.20397643744851468}, {"t": "tree", "gx": 78, "gy": 95, "r": 0.6516428210880991}, {"t": "tree", "gx": 28, "gy": 3, "r": 0.818833107704291}, {"t": "tree", "gx": 81, "gy": 41, "r": 0.07793476584112469}, {"t": "tree", "gx": 6, "gy": 65, "r": 0.5480448341630922}, {"t": "tree", "gx": 14, "gy": 52, "r": 0.6640264358381749}, {"t": "tree", "gx": 70, "gy": 13, "r": 0.6530583513057926}, {"t": "tree", "gx": 52, "gy": 91, "r": 0.27116687156102737}, {"t": "tree", "gx": 38, "gy": 87, "r": 0.30759576274339384}, {"t": "tree", "gx": 8, "gy": 41, "r": 0.7453375649937991}, {"t": "tree", "gx": 115, "gy": 47, "r": 0.4140800268683238}, {"t": "tree", "gx": 84, "gy": 27, "r": 0.3907311165931202}, {"t": "tree", "gx": 53, "gy": 28, "r": 0.9419874102315052}, {"t": "tree", "gx": 57, "gy": 22, "r": 0.4237548046822792}, {"t": "tree", "gx": 107, "gy": 13, "r": 0.40621768368628364}, {"t": "tree", "gx": 115, "gy": 48, "r": 0.4609062356729394}, {"t": "tree", "gx": 22, "gy": 18, "r": 0.014834374574537512}, {"t": "tree", "gx": 72, "gy": 20, "r": 0.6406666920070964}, {"t": "tree", "gx": 118, "gy": 52, "r": 0.08903111199188607}, {"t": "tree", "gx": 23, "gy": 20, "r": 0.3479449397571013}, {"t": "tree", "gx": 22, "gy": 68, "r": 0.17178530190512376}, {"t": "tree", "gx": 10, "gy": 15, "r": 0.38373475142203006}, {"t": "tree", "gx": 40, "gy": 18, "r": 0.8372922907998838}, {"t": "tree", "gx": 7, "gy": 63, "r": 0.31452596972416746}, {"t": "tree", "gx": 79, "gy": 83, "r": 0.38789518241803655}, {"t": "tree", "gx": 81, "gy": 90, "r": 0.8245557538504698}, {"t": "tree", "gx": 22, "gy": 83, "r": 0.7858255718394186}, {"t": "tree", "gx": 30, "gy": 81, "r": 0.40448455225474456}, {"t": "tree", "gx": 110, "gy": 27, "r": 0.8291877021860719}, {"t": "tree", "gx": 25, "gy": 74, "r": 0.2181368771323008}, {"t": "tree", "gx": 22, "gy": 51, "r": 0.3592076683272175}, {"t": "tree", "gx": 94, "gy": 26, "r": 0.041099033384490835}, {"t": "tree", "gx": 73, "gy": 88, "r": 0.03812870135826185}, {"t": "tree", "gx": 109, "gy": 43, "r": 0.1177310153084733}, {"t": "tree", "gx": 78, "gy": 60, "r": 0.5500518370345951}, {"t": "tree", "gx": 82, "gy": 41, "r": 0.6490278573339571}, {"t": "tree", "gx": 41, "gy": 76, "r": 0.2492588492165494}, {"t": "tree", "gx": 49, "gy": 59, "r": 0.5035783979173942}, {"t": "tree", "gx": 2, "gy": 81, "r": 0.9861376098506272}, {"t": "tree", "gx": 61, "gy": 32, "r": 0.4468188715246706}, {"t": "tree", "gx": 81, "gy": 60, "r": 0.8365451483396368}, {"t": "tree", "gx": 53, "gy": 15, "r": 0.0671206573281875}, {"t": "tree", "gx": 47, "gy": 57, "r": 0.36533231356526263}, {"t": "tree", "gx": 66, "gy": 67, "r": 0.6570957753119379}, {"t": "tree", "gx": 7, "gy": 83, "r": 0.13027096601010124}, {"t": "tree", "gx": 120, "gy": 95, "r": 0.3137258498194522}, {"t": "tree", "gx": 94, "gy": 67, "r": 0.07996795366901843}, {"t": "tree", "gx": 116, "gy": 50, "r": 0.6527456563030777}, {"t": "tree", "gx": 102, "gy": 19, "r": 0.02585648638807314}, {"t": "tree", "gx": 10, "gy": 80, "r": 0.7320843912105973}, {"t": "tree", "gx": 106, "gy": 16, "r": 0.19370730319334173}, {"t": "tree", "gx": 115, "gy": 64, "r": 0.2878815975534862}, {"t": "tree", "gx": 105, "gy": 23, "r": 0.6861339568226152}, {"t": "tree", "gx": 94, "gy": 30, "r": 0.06551620984849393}, {"t": "tree", "gx": 46, "gy": 80, "r": 0.75617976674602}, {"t": "tree", "gx": 22, "gy": 43, "r": 0.8965372414405026}, {"t": "tree", "gx": 37, "gy": 60, "r": 0.14357229511560043}, {"t": "tree", "gx": 28, "gy": 77, "r": 0.262867663918929}, {"t": "tree", "gx": 66, "gy": 32, "r": 0.3190775168856006}, {"t": "tree", "gx": 6, "gy": 27, "r": 0.18209638747174628}, {"t": "tree", "gx": 121, "gy": 37, "r": 0.6796799550043369}, {"t": "tree", "gx": 16, "gy": 69, "r": 0.04857157644866905}, {"t": "tree", "gx": 111, "gy": 48, "r": 0.9661549171280271}, {"t": "tree", "gx": 59, "gy": 73, "r": 0.5214525131884491}, {"t": "tree", "gx": 90, "gy": 15, "r": 0.25203159446235446}, {"t": "tree", "gx": 111, "gy": 52, "r": 0.7379231214349762}, {"t": "tree", "gx": 75, "gy": 20, "r": 0.36025138445816074}, {"t": "tree", "gx": 99, "gy": 12, "r": 0.44228162787889913}, {"t": "tree", "gx": 24, "gy": 80, "r": 0.7435947206465894}, {"t": "tree", "gx": 8, "gy": 39, "r": 0.819824297101101}, {"t": "tree", "gx": 34, "gy": 41, "r": 0.6392378432002457}, {"t": "tree", "gx": 113, "gy": 76, "r": 0.9284592245794723}, {"t": "tree", "gx": 116, "gy": 42, "r": 0.7330387756361884}, {"t": "tree", "gx": 97, "gy": 6, "r": 0.22163751087609496}, {"t": "tree", "gx": 39, "gy": 80, "r": 0.6256179990785783}, {"t": "tree", "gx": 18, "gy": 64, "r": 0.22725964048891834}, {"t": "tree", "gx": 85, "gy": 7, "r": 0.022289522397466177}, {"t": "tree", "gx": 15, "gy": 68, "r": 0.3571515495636546}, {"t": "tree", "gx": 76, "gy": 40, "r": 0.5890916074345015}, {"t": "tree", "gx": 28, "gy": 48, "r": 0.6239295589064933}, {"t": "tree", "gx": 62, "gy": 22, "r": 0.13474869738602646}, {"t": "tree", "gx": 121, "gy": 33, "r": 0.7074726160564503}, {"t": "tree", "gx": 59, "gy": 14, "r": 0.0636686432228244}, {"t": "tree", "gx": 20, "gy": 87, "r": 0.7821561341714869}, {"t": "tree", "gx": 53, "gy": 35, "r": 0.967135399665654}, {"t": "tree", "gx": 9, "gy": 84, "r": 0.8208806854660151}, {"t": "fountainGarden", "gx": 46, "gy": 49}, {"t": "bench", "gx": 44, "gy": 48}, {"t": "bench", "gx": 48, "gy": 50}, {"t": "bench", "gx": 44, "gy": 50}, {"t": "bench", "gx": 48, "gy": 48}, {"t": "lamp", "gx": 43, "gy": 49}, {"t": "lamp", "gx": 49, "gy": 49}, {"t": "lamp", "gx": 46, "gy": 47}, {"t": "lamp", "gx": 46, "gy": 51}, {"t": "bins", "gx": 45, "gy": 51}, {"t": "sign", "gx": 46, "gy": 51, "txt": "분리수거"}, {"t": "flower", "gx": 27, "gy": 32}, {"t": "flower", "gx": 28, "gy": 32}, {"t": "flower", "gx": 29, "gy": 32}, {"t": "flower", "gx": 27, "gy": 33}, {"t": "flower", "gx": 28, "gy": 33}, {"t": "flower", "gx": 29, "gy": 33}, {"t": "stadium", "gx": 77, "gy": 48, "fw": 12, "fd": 9}];
+const PLAYER_SPAWN={"gx": 79, "gy": 29};
+// ===== END AUTO-GENERATED =====
+/*CAMPUS_DATA_END*/
+function setRect(arr,x0,y0,x1,y1,v){for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++) if(arr[y]&&x>=0&&x<GW)arr[y][x]=v;}
+const ground=[]; for(let y=0;y<GH;y++){ground.push(new Array(GW).fill(0));}
+GROUND_OPS.forEach(o=>setRect(ground,o[0],o[1],o[2],o[3],o[4]));
+const decor=DECOR;
+const crowd=[]; (function(){ let s=99; const R=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
+ const cols=['#c45a6a','#5a8fd6','#6aae6a','#b08fd0','#d0a85a','#5ab0a8','#d07a9a','#7a8fd0'];
+ for(let i=0;i<10;i++){ const gx=PLAZA.gx-3+R()*6, gy=PLAZA.gy-2+R()*4; crowd.push({gx,gy,tx:gx,ty:gy,c:cols[i%cols.length],hair:['#3a2a1a','#5a3a20','#222'][i%3],t:R()*100,dir:'S'}); }})();
+const blockedTiles=new Set();
+buildings.forEach(b=>{ if(b.kind==='court')return; for(let y=b.gy;y<b.gy+b.d;y++)for(let x=b.gx;x<b.gx+b.w;x++)blockedTiles.add(x+','+y);});
+for(let y=0;y<GH;y++)for(let x=0;x<GW;x++) if(ground[y][x]===3) blockedTiles.add(x+','+y);
+function blocked(gx,gy){ return blockedTiles.has(Math.floor(gx)+','+Math.floor(gy)); }
+const player={gx:PLAYER_SPAWN.gx,gy:PLAYER_SPAWN.gy, spd:0.11, dir:'S', moving:false, t:0};
+
+const QUESTS=[
+ {id:'plogging',npc:'usong',cat:'E',title:'캠퍼스 플로깅',cert:'photo',desc:'캠퍼스를 돌며 쓰레기를 줍고 인증샷을 남기세요.',pts:50,xp:40,learn:{k:'SDG 11·15 · 지속가능한 도시/육상생태',tip:'주운 쓰레기를 정확히 분리배출하면 자원순환 효과가 커져요.',link:'환경동아리 "그린순천" 플로깅 모임'}},
+ {id:'tumbler',npc:'usong',cat:'E',title:'텀블러 사용 인증',cert:'receipt',desc:'교내 카페에서 텀블러로 주문하고 영수증을 인증하세요.',pts:30,xp:25,learn:{k:'SDG 12 · 책임있는 소비',tip:'일회용 컵 1개 ≈ 11g CO₂. 텀블러 10회면 종이컵 한 박스를 아껴요.',link:'생협 카페 텀블러 할인'}},
+ {id:'energy',npc:'chong',cat:'G',title:'에코 오피스 출근 도장',cert:'qr',desc:'대학본부 1층 키오스크 QR을 스캔해 에너지 절약 캠페인에 동참하세요.',pts:25,xp:20,learn:{k:'ESG-G · 투명한 경영 참여',tip:'개인 실천이 부서 ESG 지표로 집계되어 "올해의 에코 부서" 평가에 반영돼요.',link:'총무처 에너지 절약 주간'}},
+ {id:'vision',npc:'chong',cat:'G',title:'ESG 비전 퀴즈',cert:'none',quiz:true,desc:'순천대 ESG 경영 비전 퀴즈를 풀어 지배구조를 이해하세요.',pts:20,xp:15,learn:{k:'ESG-G · 거버넌스',tip:'거버넌스는 의사결정의 투명성·책임성이에요. 학생 의견 수렴도 G의 일부!',link:'대학평의원회 학생 참여'}},
+ {id:'kindness',npc:'cheri',cat:'S',title:'배려 캠페인 인증',cert:'photo',desc:'무거운 짐 들어주기, 길 안내 등 배려 행동을 사진으로 남기세요.',pts:30,xp:25,learn:{k:'SDG 10 · 불평등 완화',tip:'작은 배려가 캠퍼스의 심리적 안전망을 만듭니다. 사회(S)의 핵심!',link:'인권센터 배려문화 주간'}},
+ {id:'human',npc:'cheri',cat:'S',title:'인권 OX 퀴즈',cert:'none',quiz:true,desc:'인권·다양성 OX 퀴즈로 사회적 감수성을 키우세요.',pts:20,xp:15,learn:{k:'SDG 5·10 · 성평등/포용',tip:'차별 없는 호칭과 표현부터가 인권 존중의 시작이에요.',link:'인권센터 상담'}},
+];
+const catName={E:'환경',S:'사회',G:'지배구조'};
+const QUIZ={ vision:[{q:'ESG의 G는?',opts:['Green','Governance(지배구조)','Growth'],a:1,ex:'G는 Governance, 투명하고 책임있는 의사결정 구조예요.'},
+  {q:'대학 거버넌스에 학생이 참여하는 기구는?',opts:['대학평의원회','총학생회 MT','학생식당'],a:0,ex:'대학평의원회 등에 학생이 참여합니다.'}],
+ human:[{q:'OX: 다양성 존중은 ESG의 S 영역이다.',opts:['O','X'],a:0,ex:'맞아요. 포용·다양성·인권은 사회(S)의 핵심입니다.'},
+  {q:'OX: 외모 평가 농담은 인권과 무관하다.',opts:['O','X'],a:1,ex:'아니에요. 차별·인권 침해가 될 수 있습니다.'}],
+ esgmini:[{q:'페트병 분리배출은?',opts:['라벨 떼고 압착','내용물 그대로','일반쓰레기'],a:0,ex:'라벨 제거+압착이 재활용률을 높여요.'},
+  {q:'캠퍼스 에너지 절약은?',opts:['빈 강의실 소등','냉방 최대','엘리베이터 1층'],a:0,ex:'빈 공간 소등이 기본 절약입니다.'},
+  {q:'OX: 텀블러는 SDG 12와 연결된다.',opts:['O','X'],a:0,ex:'맞아요. 책임있는 소비 행동입니다.'}]};
+const SHOP=[{id:'hat_grad',name:'학사모',icon:'🎓',rare:'normal',price:40},{id:'leaf_crown',name:'나뭇잎 왕관',icon:'🌿',rare:'season',price:120},{id:'eco_cape',name:'에코 망토',icon:'🦸',rare:'limited',price:300},{id:'cherry_pin',name:'벚꽃 핀',icon:'🌸',rare:'season',price:90},{id:'star_fx',name:'별 이펙트',icon:'✨',rare:'limited',price:250},{id:'glasses',name:'동그란 안경',icon:'👓',rare:'normal',price:30}];
+const rareName={normal:'일반',season:'시즌',limited:'한정판'};
+const RANK_BASE=[{dept:'환경공학과',p:0},{dept:'사회복지학부',p:1820},{dept:'행정학과',p:1540},{dept:'생명산업과학과',p:2110},{dept:'컴퓨터공학과',p:1290},{dept:'기계공학과',p:980},{dept:'한약자원학과',p:1670},{dept:'유아교육과',p:1430}];
+
+// ===== 통일 픽셀 팔레트(따뜻·저채도) =====
+const PAL={ out:'#2b2230',
+  grass:['#7ba35a','#6c9550'], grassDot:'#8bb066', grassDk:'#5c843f',
+  path:['#ddc18d','#cdae78'], plaza:['#e7dcc4','#d8cab0'],
+  water:['#5fb6c9','#4f9fb3'], waterHi:'#bfeaf2', field:['#6aa84e','#5c9a42'],
+  garden:['#b88a52','#a87a46'] };
+const WALLS={ cream:['#efe0bd','#d8c098','#b89a6e'], sand:['#e6c79a','#cda576','#a87f52'],
+  rose:['#e8c0c2','#d098a0','#a86e78'], sage:['#cdd6a8','#a9b783','#84945e'],
+  sky:['#bcccd6','#94aab8','#6c8696'], warmgray:['#d8cdc4','#b6a89e','#897a70'] };
+const ROOFS={ terra:['#cf6a48','#a84e34','#7c3826'], teal:['#4f9a90','#387369','#264f47'],
+  navy:['#4a5a86','#33416a','#222c4c'], brown:['#9a6440','#74482c','#523220'],
+  red:['#c4564a','#9c3e36','#722c28'], slate:['#7a8aa0','#5a6a82','#3e4a60'] };
+const CATSTYLE={ E:{w:['sage','cream','warmgray'],r:['teal','brown','terra']},
+  S:{w:['rose','cream','sand'],r:['terra','red','brown']},
+  G:{w:['sky','warmgray','cream'],r:['navy','slate','teal']} };
+function hx(c){return [parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];}
+function rgb(a){return '#'+a.map(x=>Math.max(0,Math.min(255,Math.round(x))).toString(16).padStart(2,'0')).join('');}
+function mul(c,f){const a=hx(c);return rgb([a[0]*f,a[1]*f,a[2]*f]);}
+function hashStr(s){s=''+s;let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0);}
+function variantFor(b){ if(b._v)return b._v; const h=hashStr(b.code); const cs=CATSTYLE[b.cat]||CATSTYLE.G;
+  b._v={ wall:WALLS[cs.w[h%cs.w.length]], roof:ROOFS[cs.r[(h>>>3)%cs.r.length]],
+    win:0.82+((h>>>5)%26)/100, lit:(h>>>7)&7, prop:(h>>>9)%5, hjit:1+(((h>>>11)%9)-4)/100, flip:((h>>>14)&1)===1 };
+  return b._v; }
+const TILECOL={0:['#7ba35a','#6c9550'],1:['#e7dcc4','#d8cab0'],2:['#ddc18d','#cdae78'],3:['#5fb6c9','#4f9fb3'],4:['#b88a52','#a87a46'],5:['#6aa84e','#5c9a42']};
+
+function drawSky(){
+  const g=ctx.createLinearGradient(0,0,0,VH());
+  g.addColorStop(0,lerpHex('#9cd3e0','#10173a',NF)); g.addColorStop(.55,lerpHex('#cfe7df','#1d2748',NF)); g.addColorStop(1,lerpHex('#f0e6cf','#2c3358',NF));
+  ctx.fillStyle=g; ctx.fillRect(0,0,VW(),VH());
+  // 별(밤)
+  if(NF>0.25){ ctx.save(); ctx.globalAlpha=(NF-0.25)/0.75; ctx.fillStyle='#fffbe8'; const W=Math.round(VW()),H=Math.round(VH()*0.55),tw=Math.floor(Date.now()/500);
+    for(let i=0;i<46;i++){ if((i*7+tw)%6===0)continue; ctx.fillRect((i*97)%W,(i*61)%H,2,2); } ctx.restore(); }
+  // 해 / 달
+  const cb=toScr; const sunX=VW()*0.78, sunY=VH()*0.2; ctx.save();
+  if(NF<0.6){ ctx.globalAlpha=1-NF/0.6; ctx.fillStyle='#ffe9a0'; ctx.beginPath(); ctx.arc(sunX,sunY,18,0,7); ctx.fill(); }
+  if(NF>0.4){ ctx.globalAlpha=(NF-0.4)/0.6; ctx.fillStyle='#eef3ff'; ctx.beginPath(); ctx.arc(VW()*0.2,VH()*0.18,15,0,7); ctx.fill(); ctx.fillStyle=lerpHex('#10173a','#10173a',1); ctx.beginPath(); ctx.arc(VW()*0.2+6,VH()*0.18-4,13,0,7); ctx.fill(); }
+  ctx.restore();
+  const px=-cam.x*0.12, base=VH()*0.44;
+  function mtn(off,col,amp){ ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(-100,base+90);
+    for(let x=-100;x<=VW()+100;x+=46){ const y=base - amp*Math.abs(Math.sin((x+off+px)*0.004))-amp*0.3; ctx.lineTo(x,y); }
+    ctx.lineTo(VW()+100,base+90); ctx.closePath(); ctx.fill(); }
+  mtn(0,lerpHex('#8fb47e','#202f2a',NF),96); mtn(220,lerpHex('#a3c48d','#28392f',NF),66); mtn(120,lerpHex('#bcd6a2','#324736',NF),42);
+  const t=Date.now()*0.005; ctx.save(); ctx.globalAlpha=1-NF*0.7; ctx.fillStyle=lerpHex('#fff7ec','#aab4d8',NF);
+  [[((t+60)%(VW()+300))-150,66,1],[((t*0.7+260)%(VW()+300))-150,120,.85],[((t*1.2+460)%(VW()+300))-150,44,1.1]].forEach(([x,y,s])=>{
+    x=Math.round(x);y=Math.round(y); ctx.fillRect(x-40*s,y,80*s,11*s); ctx.fillRect(x-26*s,y-7*s,54*s,9*s); ctx.fillRect(x-12*s,y+9*s,40*s,8*s); });
+  ctx.restore();
+}
+function drawGround(){
+  // 카메라 주변 윈도우만 순회(큰 맵 성능)
+  const gcx=Math.round((cam.x/HW+cam.y/HH)/2), gcy=Math.round((cam.y/HH-cam.x/HW)/2), R=36;
+  const gy0=Math.max(0,gcy-R), gy1=Math.min(GH,gcy+R), gx0=Math.max(0,gcx-R), gx1=Math.min(GW,gcx+R);
+  for(let gy=gy0; gy<gy1; gy++){ for(let gx=gx0; gx<gx1; gx++){
+      const a=toScr(gx,gy); if(a.x<-TW||a.x>VW()+TW||a.y<-TH||a.y>VH()+TH+260) continue;
+      const b=toScr(gx+1,gy), c=toScr(gx+1,gy+1), d=toScr(gx,gy+1); const tt=ground[gy][gx];
+      const col=(TILECOL[tt]||TILECOL[0]); ctx.fillStyle=((gx+gy)%2)?col[0]:col[1];
+      ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.lineTo(c.x,c.y); ctx.lineTo(d.x,d.y); ctx.closePath(); ctx.fill();
+      const cx=(a.x+c.x)/2, cy=(a.y+c.y)/2, hh=hashStr(gx+'_'+gy);
+      if(tt===0||tt===5){ ctx.fillStyle=(tt===5?'#4f8a3a':PAL.grassDk);
+        for(let k=0;k<3;k++){ const ox=((hh>>(k*3))%5-2)*6, oy=((hh>>(k*3+8))%3-1)*5; ctx.fillRect(Math.round(cx+ox),Math.round(cy+oy),2,2);} }
+      else if(tt===2){ ctx.fillStyle='#c2a26a'; ctx.fillRect(Math.round(cx-1+((hh%3-1)*5)),Math.round(cy+((hh>>4)%3-1)*4),2,2); }
+      else if(tt===3){ ctx.fillStyle=PAL.waterHi; const ph=Date.now()*0.002+gx+gy; ctx.fillRect(Math.round(cx+Math.sin(ph)*7),Math.round(cy-2),3,1); } } }
+  const ce=toScr(PLAZA.gx+.5,PLAZA.gy+.5); ctx.save(); ctx.globalAlpha=.32; ctx.strokeStyle='#9a7a52'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.ellipse(ce.x,ce.y,54,27,0,0,7); ctx.stroke();
+  ctx.font='bold 26px serif'; ctx.fillStyle='#8a6a42'; ctx.textAlign='center'; ctx.fillText('順',ce.x,ce.y+9); ctx.restore(); ctx.textAlign='left';
+}
+function ellShadow(cx,cy,rx,ry){ ctx.save(); ctx.globalAlpha=.2; ctx.fillStyle='#1a1208'; ctx.beginPath(); ctx.ellipse(cx,cy,rx,ry,0,0,7); ctx.fill(); ctx.restore(); }
+function quad(p1,p2,p3,p4,col){ ctx.fillStyle=col; ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.lineTo(p3.x,p3.y); ctx.lineTo(p4.x,p4.y); ctx.closePath(); ctx.fill(); }
+function lerp(a,b,t){return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};}
+function rrect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+// 픽셀 렌더 헬퍼
+function Rp(p){return {x:Math.round(p.x),y:Math.round(p.y)};}
+function poly(pts,fill,stroke,lw){ ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y); for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y); ctx.closePath();
+  if(fill){ctx.fillStyle=fill;ctx.fill();} if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw||1;ctx.lineJoin='miter';ctx.stroke();} }
+function edge(p,q){ ctx.strokeStyle=PAL.out; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke(); }
+function expand(pts,d){ const cx=(pts[0].x+pts[1].x+pts[2].x+pts[3].x)/4, cy=(pts[0].y+pts[1].y+pts[2].y+pts[3].y)/4;
+  return pts.map(p=>{const dx=p.x-cx,dy=p.y-cy,m=Math.hypot(dx,dy)||1;return {x:Math.round(p.x+dx/m*d),y:Math.round(p.y+dy/m*d)};}); }
+function drawCourt(b){ const A=Rp(toScr(b.gx,b.gy)),B=Rp(toScr(b.gx+b.w,b.gy)),C=Rp(toScr(b.gx+b.w,b.gy+b.d)),D=Rp(toScr(b.gx,b.gy+b.d));
+  poly([A,B,C,D],'#7aa05a',PAL.out,1);
+  ctx.strokeStyle='#eef3e4'; ctx.lineWidth=1; const m0=lerp(A,D,.5),m1=lerp(B,C,.5); ctx.beginPath(); ctx.moveTo(m0.x,m0.y); ctx.lineTo(m1.x,m1.y); ctx.stroke();
+  const n0=Rp(lerp(A,B,.5)),n1=Rp(lerp(D,C,.5)); edge({x:n0.x,y:n0.y-9},n0); edge({x:n1.x,y:n1.y-9},n1);
+  ctx.strokeStyle=PAL.out; ctx.beginPath(); ctx.moveTo(n0.x,n0.y-8); ctx.lineTo(n1.x,n1.y-8); ctx.stroke();
+  if(Math.hypot(player.gx-(b.gx+b.w/2),player.gy-(b.gy+b.d/2))<8) isoLabel(b.icon+' '+b.name,Rp(lerp(A,C,.5))); }
+function drawBuilding(b){
+  if(b.kind==='court'){ drawCourt(b); return; }
+  const v=variantFor(b), h=Math.round(b.h*v.hjit);
+  const A=Rp(toScr(b.gx,b.gy)),B=Rp(toScr(b.gx+b.w,b.gy)),C=Rp(toScr(b.gx+b.w,b.gy+b.d)),D=Rp(toScr(b.gx,b.gy+b.d));
+  const up=p=>({x:p.x,y:p.y-h}); const A2=up(A),B2=up(B),C2=up(C),D2=up(D);
+  ctx.save(); ctx.globalAlpha=.16; ctx.fillStyle='#241c10'; ctx.beginPath(); ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.lineTo(C.x+8,C.y+6);ctx.lineTo(D.x,D.y);ctx.closePath();ctx.fill(); ctx.restore();
+  const left=v.flip?v.wall[2]:v.wall[1], right=v.flip?v.wall[1]:v.wall[2];
+  poly([D,C,C2,D2],left); poly([B,C,C2,B2],right);
+  // 굽(plinth)
+  poly([D,C,Rp(lerp(C,C2,.12)),Rp(lerp(D,D2,.12))],mul(left,.78));
+  poly([B,C,Rp(lerp(C,C2,.12)),Rp(lerp(B,B2,.12))],mul(right,.78));
+  // 창문
+  faceWindows(D,C,D2,C2,b,v,'L'); faceWindows(B,C,B2,C2,b,v,'R');
+  // 출입문(남서면 중앙)
+  const d0=lerp(D,C,.40),d1=lerp(D,C,.60),d0u=lerp(D2,C2,.40),d1u=lerp(D2,C2,.60);
+  poly([Rp(d0),Rp(d1),Rp(lerp(d1,d1u,.30)),Rp(lerp(d0,d0u,.30))],'#5a3a24',PAL.out,1);
+  // 벽 외곽선
+  poly([D,C,C2,D2],null,PAL.out,1); poly([B,C,C2,B2],null,PAL.out,1);
+  edge(C,C2); edge(B,B2); edge(D,D2);
+  // 지붕(처마 overhang)
+  const R2=expand([A2,B2,C2,D2],3);
+  poly(R2,v.roof[0]);
+  poly([R2[1],R2[2],C2,B2],v.roof[1]);        // 우측 처마 그늘
+  poly([R2[2],R2[3],D2,C2],mul(v.roof[1],.92)); // 좌측 처마 그늘
+  ctx.strokeStyle=mul(v.roof[0],1.22); ctx.lineWidth=1; ctx.beginPath();  // 용마루 하이라이트(뒤)
+  ctx.moveTo(R2[0].x,R2[0].y);ctx.lineTo(R2[1].x,R2[1].y);ctx.moveTo(R2[0].x,R2[0].y);ctx.lineTo(R2[3].x,R2[3].y); ctx.stroke();
+  poly(R2,null,PAL.out,1);
+  if(b.solar) solarRoof(R2[0],R2[1],R2[2],R2[3]); else roofProp(A2,B2,C2,D2,v);
+  if(Math.hypot(player.gx-(b.gx+b.w/2),player.gy-(b.gy+b.d/2))<8) isoLabel(b.icon+' '+b.name,R2[0]);
+}
+function faceWindows(P0,P1,P0u,P1u,b,v,side){
+  const wpx=Math.hypot(P1.x-P0.x,P1.y-P0.y); const cols=Math.max(1,Math.round(wpx/24*v.win)); const rows=Math.max(1,Math.round(b.h/40));
+  const glass=side==='L'?'#d2e6ee':'#aecbd6', lit='#ffd98a';
+  for(let c=0;c<cols;c++)for(let r=0;r<rows;r++){
+    const t0=(c+0.26)/cols, t1=(c+0.74)/cols; const s0=0.18+r*(0.74/rows), s1=s0+(0.74/rows)*0.56;
+    const bl=Rp(lerp(lerp(P0,P1,t0),lerp(P0u,P1u,t0),s0)), br=Rp(lerp(lerp(P0,P1,t1),lerp(P0u,P1u,t1),s0));
+    const tr=Rp(lerp(lerp(P0,P1,t1),lerp(P0u,P1u,t1),s1)), tl=Rp(lerp(lerp(P0,P1,t0),lerp(P0u,P1u,t0),s1));
+    const night=NF>0.4;
+    const onDay=((hashStr(b.code)+c*7+r*13)&7)===v.lit;
+    const onNight=((hashStr(b.code)+c*5+r*11)&3)===0;     // 밤에 켜진 창
+    let wc;
+    if(night){ wc = onNight ? '#ffe39a' : '#2c3a55'; }     // 밤: 소등(어두움) + 일부 점등
+    else { wc = onDay ? lit : glass; }
+    poly([bl,br,tr,tl], wc, PAL.out,1);
+    if(night&&onNight) nightLights.push({x:(bl.x+tr.x)/2,y:(bl.y+tr.y)/2,r:5});
+  }
+}
+function roofProp(A2,B2,C2,D2,v){ const cx=Math.round((A2.x+C2.x)/2), cy=Math.round((A2.y+C2.y)/2);
+  if(v.prop===0){ ctx.fillStyle='#9aa0a6'; ctx.fillRect(cx-6,cy-13,12,12); ctx.strokeStyle=PAL.out; ctx.strokeRect(cx-6,cy-13,12,12); ctx.fillStyle='#7c828a'; ctx.fillRect(cx-6,cy-13,12,3); }
+  else if(v.prop===1){ ctx.fillStyle='#b0b6bc'; ctx.strokeStyle=PAL.out; ctx.fillRect(cx-10,cy-7,7,6); ctx.strokeRect(cx-10,cy-7,7,6); ctx.fillRect(cx+3,cy-7,7,6); ctx.strokeRect(cx+3,cy-7,7,6); }
+  else if(v.prop===2){ ctx.fillStyle='#6aa84e'; ctx.fillRect(cx-9,cy-8,18,8); ctx.strokeStyle=PAL.out; ctx.strokeRect(cx-9,cy-8,18,8); ctx.fillStyle='#8bc46a'; ctx.fillRect(cx-9,cy-8,18,2); }
+  else if(v.prop===3){ ctx.strokeStyle=PAL.out; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,cy-16); ctx.stroke(); ctx.fillStyle='#c4564a'; ctx.fillRect(cx-1,cy-18,3,3); }
+}
+function solarRoof(A2,B2,C2,D2){
+  const a=Rp(lerp(A2,C2,0.2)), c=Rp(lerp(C2,A2,0.2)), b=Rp(lerp(B2,D2,0.2)), d=Rp(lerp(D2,B2,0.2));
+  poly([a,b,c,d],'#27406b',PAL.out,1); ctx.strokeStyle='#4f6fa8'; ctx.lineWidth=1;
+  for(let i=1;i<4;i++){ const t=i/4; let p=lerp(a,b,t),q=lerp(d,c,t); ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
+    let r=lerp(a,d,t),s=lerp(b,c,t); ctx.beginPath();ctx.moveTo(r.x,r.y);ctx.lineTo(s.x,s.y);ctx.stroke(); }
+  ctx.save(); ctx.globalAlpha=.5; poly([a,Rp(lerp(a,b,.45)),Rp(lerp(d,c,.45)),d],'#7fa6d6'); ctx.restore();
+}
+function isoLabel(txt,topPt){ const cx=topPt.x, ty=topPt.y-8; ctx.font='bold 12px "Apple SD Gothic Neo",sans-serif'; ctx.textAlign='center';
+  const w=ctx.measureText(txt).width+16; ctx.fillStyle='#11192bd0'; rrect(cx-w/2,ty-19,w,19,8); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.fillText(txt,cx,ty-5); ctx.textAlign='left'; }
+function drawTree(d){ const s=Rp(toScr(d.gx+.5,d.gy+.5)); const r=Math.round(15+d.r*7); ellShadow(s.x,s.y+2,r*0.8,r*0.3);
+  const th=Math.round(r*0.9);
+  ctx.fillStyle='#7a4a28'; ctx.fillRect(s.x-3,s.y-th,6,th); ctx.strokeStyle=PAL.out; ctx.lineWidth=1; ctx.strokeRect(s.x-3,s.y-th,6,th);
+  const cy=s.y-r-Math.round(r*0.6);
+  ctx.fillStyle='#579a5f'; ctx.beginPath(); ctx.arc(s.x,cy,r,0,7); ctx.fill();
+  ctx.fillStyle='#3f7d4e'; ctx.beginPath(); ctx.arc(s.x,cy,r,0.12*Math.PI,0.96*Math.PI); ctx.lineTo(s.x,cy); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#79bd72'; ctx.beginPath(); ctx.arc(s.x-r*0.32,cy-r*0.32,r*0.4,0,7); ctx.fill();
+  ctx.strokeStyle=PAL.out; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(s.x,cy,r,0,7); ctx.stroke(); }
+function drawHedge(d){ const s=Rp(toScr(d.gx+.5,d.gy+.5)); ellShadow(s.x,s.y+3,22,8);
+  ctx.fillStyle='#3f8155'; ctx.fillRect(s.x-20,s.y-16,40,18); ctx.strokeStyle=PAL.out; ctx.lineWidth=1; ctx.strokeRect(s.x-20,s.y-16,40,18);
+  ctx.fillStyle='#56a06a'; ctx.fillRect(s.x-20,s.y-16,40,5); }
+function drawBench(d){ const s=Rp(toScr(d.gx+.5,d.gy+.5)); ellShadow(s.x,s.y+4,20,6);
+  ctx.strokeStyle=PAL.out; ctx.lineWidth=1;
+  ctx.fillStyle='#a87a44'; ctx.fillRect(s.x-18,s.y-14,36,5); ctx.strokeRect(s.x-18,s.y-14,36,5);
+  ctx.fillStyle='#9a6a3a'; ctx.fillRect(s.x-18,s.y-4,36,6); ctx.strokeRect(s.x-18,s.y-4,36,6);
+  ctx.fillStyle='#6a4420'; ctx.fillRect(s.x-15,s.y+2,4,7); ctx.fillRect(s.x+11,s.y+2,4,7); }
+function drawLamp(d){ const s=Rp(toScr(d.gx+.5,d.gy+.5)); ellShadow(s.x,s.y+2,7,3);
+  ctx.strokeStyle=PAL.out; ctx.lineWidth=1;
+  ctx.fillStyle='#3b4350'; ctx.fillRect(s.x-2,s.y-42,4,42); ctx.strokeRect(s.x-2,s.y-42,4,42);
+  ctx.fillStyle=NF>0.35?'#fff6c0':'#ffe07a'; ctx.fillRect(s.x-5,s.y-52,10,11); ctx.strokeRect(s.x-5,s.y-52,10,11);
+  ctx.fillStyle='#fff3b0'; ctx.fillRect(s.x-3,s.y-50,4,7);
+  if(NF>0.35) nightLights.push({x:s.x,y:s.y-47,r:18}); }
+function drawBins(d){ const s=toScr(d.gx+.5,d.gy+.5); ellShadow(s.x,s.y+3,24,7);
+  [['#3aa0e0',-16],['#3ab06a',0],['#e0a83a',16]].forEach(([c,dx])=>{ ctx.fillStyle=c; rrect(s.x-7+dx,s.y-20,13,22,3); ctx.fill();
+    ctx.fillStyle='#0003'; rrect(s.x-7+dx,s.y-22,13,4,2); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='9px sans-serif'; ctx.textAlign='center'; ctx.fillText('♻',s.x-0.5+dx,s.y-8); }); ctx.textAlign='left'; }
+function drawFlower(d){ const s=Rp(toScr(d.gx+.5,d.gy+.5));
+  const a=Rp(toScr(d.gx,d.gy)),b=Rp(toScr(d.gx+1,d.gy)),c=Rp(toScr(d.gx+1,d.gy+1)),e=Rp(toScr(d.gx,d.gy+1));
+  poly([a,b,c,e],'#8a5a34',PAL.out,1);
+  const cols=['#e07a96','#ffcf6b','#f4efe6','#c79bff']; let q=(d.gx*7+d.gy)|0; const R=()=>{q=(q*1103515245+12345)&0x7fffffff;return q/0x7fffffff;};
+  for(let i=0;i<7;i++){ const fx=Math.round(s.x-13+R()*26), fy=Math.round(s.y-6+R()*12); ctx.fillStyle=cols[i%4]; ctx.fillRect(fx,fy,3,3); ctx.fillStyle='#ffe9a0'; ctx.fillRect(fx+1,fy+1,1,1); } }
+function drawSign(d){ const s=toScr(d.gx+.5,d.gy+.5); ellShadow(s.x,s.y+2,12,4);
+  ctx.fillStyle='#6a4420'; ctx.fillRect(s.x-2,s.y-30,4,30);
+  ctx.fillStyle='#e8dcc0'; rrect(s.x-26,s.y-46,52,20,4); ctx.fill(); ctx.strokeStyle='#9a7a52';ctx.lineWidth=2;rrect(s.x-26,s.y-46,52,20,4);ctx.stroke();
+  ctx.fillStyle='#3a5a3a'; ctx.font='bold 12px sans-serif'; ctx.textAlign='center'; ctx.fillText(d.txt,s.x,s.y-32); ctx.textAlign='left'; }
+function drawFountainGarden(d){ const s=toScr(d.gx+.5,d.gy+.5); ellShadow(s.x,s.y+3,30,12);
+  ctx.fillStyle='#9aa3b3'; ctx.beginPath(); ctx.ellipse(s.x,s.y,30,15,0,0,7); ctx.fill();
+  ctx.fillStyle='#4fa6d6'; ctx.beginPath(); ctx.ellipse(s.x,s.y-1,22,11,0,0,7); ctx.fill();
+  ctx.fillStyle='#bfe6ff'; ctx.beginPath(); ctx.ellipse(s.x,s.y-2,9,5,0,0,7); ctx.fill();
+  ctx.fillStyle='#9aa3b3'; rrect(s.x-3,s.y-24,6,18,2); ctx.fill(); ctx.fillStyle='#bfe6ff99'; ctx.beginPath(); ctx.arc(s.x,s.y-26,5,0,7); ctx.fill(); }
+function drawStadium(d){ const fw=d.fw||12, fd=d.fd||9; const s=toScr(d.gx+.5,d.gy+.5);
+  const rx=((fw+fd)/2)*HW*0.84, ry=((fw+fd)/2)*HH*0.84;
+  ctx.fillStyle='#b0563a'; ctx.beginPath(); ctx.ellipse(s.x,s.y,rx,ry,0,0,7); ctx.fill();            // 트랙(적갈색)
+  ctx.strokeStyle=PAL.out; ctx.lineWidth=1; ctx.beginPath(); ctx.ellipse(s.x,s.y,rx,ry,0,0,7); ctx.stroke();
+  ctx.strokeStyle='#f3e6d6'; ctx.lineWidth=1.5;                                                       // 레인
+  for(let i=1;i<=5;i++){ const k=1-i*0.044; ctx.beginPath(); ctx.ellipse(s.x,s.y,rx*k,ry*k,0,0,7); ctx.stroke(); }
+  const ir=0.73; ctx.fillStyle='#4f9e46'; ctx.beginPath(); ctx.ellipse(s.x,s.y,rx*ir,ry*ir,0,0,7); ctx.fill();  // 인필드
+  ctx.strokeStyle=PAL.out; ctx.lineWidth=1; ctx.beginPath(); ctx.ellipse(s.x,s.y,rx*ir,ry*ir,0,0,7); ctx.stroke();
+  // 축구장(아이소 사각형 + 하프라인 + 센터서클)
+  const pw=fw*0.40, pd=fd*0.40, A=toScr(d.gx+.5-pw,d.gy+.5-pd),B=toScr(d.gx+.5+pw,d.gy+.5-pd),C=toScr(d.gx+.5+pw,d.gy+.5+pd),D=toScr(d.gx+.5-pw,d.gy+.5+pd);
+  ctx.strokeStyle='#eef6ea'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.lineTo(C.x,C.y);ctx.lineTo(D.x,D.y);ctx.closePath(); ctx.stroke();
+  const m0=lerp(A,D,.5),m1=lerp(B,C,.5); ctx.beginPath();ctx.moveTo(m0.x,m0.y);ctx.lineTo(m1.x,m1.y);ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(s.x,s.y,rx*0.12,ry*0.12,0,0,7); ctx.stroke(); }
+function drawSDG(d){ const s=toScr(d.gx+.5,d.gy+.5); ellShadow(s.x,s.y+2,10,4);
+  ctx.fillStyle='#5a4a35'; ctx.fillRect(s.x-2.5,s.y-30,5,30);
+  const sz=42, x=s.x-sz/2, y=s.y-30-sz; ctx.fillStyle=d.c; rrect(x,y,sz,sz,5); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.font='bold 16px sans-serif'; ctx.textAlign='left'; ctx.fillText(d.n, x+5, y+17);
+  ctx.font='bold 7.5px "Apple SD Gothic Neo",sans-serif'; d.label.split(' ').forEach((w,i)=> ctx.fillText(w, x+5, y+27+i*9));
+  ctx.font='13px sans-serif'; ctx.textAlign='right'; const gl={6:'💧',7:'☀️',12:'♾️',13:'🌍',15:'🌳'}[d.n]||'•'; ctx.fillText(gl, x+sz-4, y+16); ctx.textAlign='left'; }
+const MIMG={}; Object.keys(typeof MASCOT_SHEETS!=='undefined'?MASCOT_SHEETS:{}).forEach(k=>{const i=new Image();MIMG[k]={img:i,ready:false};i.onload=()=>MIMG[k].ready=true;i.src=MASCOT_SHEETS[k];});
+const MSCALE=1.5, MFW=32, MFH=40, MFEET=38;
+function drawMascot(n){ const s=toScr(n.gx+.5,n.gy+.5); const x=Math.round(s.x), y=Math.round(s.y); const sheet=MIMG[n.img];
+  const idleBob=n.mv?0:Math.round(Math.sin(Date.now()/420+n.gx)*2);
+  ctx.save(); ctx.globalAlpha=.22; ctx.fillStyle='#1a1208'; ctx.beginPath(); ctx.ellipse(x,y+2,12,4.6,0,0,7); ctx.fill(); ctx.restore();
+  const dir=n.dir||'S', row=HERO_ROW[dir]??0, flip=!!HERO_FLIP[dir], frame=n.mv?Math.floor((n.wk||0)/8)%4:0;
+  const dw=MFW*MSCALE, dh=MFH*MSCALE, dx=x-dw/2, dy=y-Math.round(MFEET*MSCALE)+idleBob;
+  if(sheet&&sheet.ready){ ctx.save(); if(flip){ctx.translate(x,0);ctx.scale(-1,1);ctx.translate(-x,0);} ctx.drawImage(sheet.img,frame*MFW,row*MFH,MFW,MFH,dx,dy,dw,dh); ctx.restore(); }
+  else { const im=IMG[n.img]; if(im&&im.complete&&im.naturalWidth){ const hh=92*n.sc,w=im.naturalWidth*(hh/im.naturalHeight); ctx.drawImage(im,x-w/2,y-hh+idleBob,w,hh); } }
+  const ny=dy+4;
+  ctx.font='bold 13px "Apple SD Gothic Neo",sans-serif'; ctx.textAlign='center'; const tw=ctx.measureText(n.name).width+16;
+  ctx.fillStyle=n.kind==='E'?'#2e6a63':n.kind==='S'?'#b04a68':'#9a6b1a'; rrect(x-tw/2,ny-18,tw,19,8); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText(n.name,x,ny-4); ctx.textAlign='left';
+  const has=QUESTS.some(q=>q.npc===n.id&&!State.doneQuests[q.id]);
+  if(nearTarget&&nearTarget.type==='npc'&&nearTarget.obj===n){ drawBubble(x+18,ny-2,has?'!':'♥'); }
+  else if(has){ const py=ny-24-Math.abs(Math.sin(Date.now()/300))*4; ctx.font='bold 28px sans-serif'; ctx.textAlign='center'; ctx.strokeStyle='#ffb300';ctx.lineWidth=4;ctx.strokeText('!',x,py); ctx.fillStyle='#ffd34d';ctx.fillText('!',x,py); ctx.textAlign='left'; } }
+// 이동 벡터(그리드) → 화면각 → 8방향
+const FVMAP={S:[0,1],SE:[0.7,0.7],E:[1,0],NE:[0.7,-0.7],N:[0,-1],NW:[-0.7,-0.7],W:[-1,0],SW:[-0.7,0.7]};
+function dir8(dx,dy){ if(!dx&&!dy)return null; const p=iso(dx,dy); const k=Math.round(Math.atan2(p.y,p.x)/(Math.PI/4));
+  return ['E','SE','S','SW','W','NW','N','NE'][((k%8)+8)%8]; }
+// 8방향 + 4프레임 스텝 + 반동(bounce) 픽셀 캐릭터
+function drawChibi(x,y,col,hair,dir,frame,moving,name,lift){
+  x=Math.round(x); y=Math.round(y); frame=frame&3; lift=Math.round(lift||0);
+  const FV=FVMAP[dir]||FVMAP.S;
+  const bob=moving?[0,-2,0,-2][frame]:(Math.floor(Date.now()/600)%2?-1:0);   // 패스 프레임에 위로 통통
+  const lead=moving?[1,0,-1,0][frame]*3:0;                                    // 발 앞뒤 스텝
+  const skin='#f0cda0', up=FV[1]<-0.3, side=Math.abs(FV[0])>0.6&&Math.abs(FV[1])<0.4;
+  // 그림자(지면 고정, 점프 시 축소)
+  ctx.save(); ctx.globalAlpha=.22; ctx.fillStyle='#1a1208'; ctx.beginPath(); ctx.ellipse(x,y+2,Math.max(4,11+bob*0.6-lift*0.3),Math.max(2,4.2+bob*0.3-lift*0.12),0,0,7); ctx.fill(); ctx.restore();
+  ctx.strokeStyle=PAL.out; ctx.lineWidth=1;
+  // 발(지면 고정 + facing 방향으로 번갈아, 점프 시 lift 만큼 상승)
+  const f1x=Math.round(x-4+FV[0]*lead), f1y=Math.round(y-2+FV[1]*lead*0.6-lift);
+  const f2x=Math.round(x+4-FV[0]*lead), f2y=Math.round(y-2-FV[1]*lead*0.6-lift);
+  ctx.fillStyle='#3a4a64'; ctx.fillRect(f1x-2,f1y,5,7); ctx.strokeRect(f1x-2,f1y,5,7); ctx.fillRect(f2x-2,f2y,5,7); ctx.strokeRect(f2x-2,f2y,5,7);
+  const tY=y-16+bob-lift, hy=y-26+bob-lift, sw=moving?[1,0,-1,0][frame]*2:0;
+  // 팔(다리 반대 스윙)
+  ctx.fillStyle=mul(col,0.82); ctx.fillRect(x-10,tY+3+sw,4,9); ctx.strokeRect(x-10,tY+3+sw,4,9); ctx.fillRect(x+6,tY+3-sw,4,9); ctx.strokeRect(x+6,tY+3-sw,4,9);
+  // 몸통
+  ctx.fillStyle=col; rrect(x-8,tY,16,16,5); ctx.fill(); rrect(x-8,tY,16,16,5); ctx.stroke();
+  ctx.fillStyle=mul(col,1.12); ctx.fillRect(x-6,tY+2,3,12);
+  // 머리
+  ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(x,hy,8,0,7); ctx.fill(); ctx.beginPath(); ctx.arc(x,hy,8,0,7); ctx.stroke();
+  ctx.fillStyle=hair;
+  if(up){ ctx.beginPath(); ctx.arc(x,hy,8,0,7); ctx.fill(); ctx.beginPath(); ctx.arc(x,hy,8,0,7); ctx.stroke(); }       // 뒤통수
+  else { ctx.beginPath(); ctx.arc(x,hy-1,8,Math.PI*0.96,Math.PI*2.04); ctx.fill(); ctx.fillRect(x-8,hy-2,16,3); }        // 앞머리
+  if(!up){ const ex=Math.round(FV[0]*2); ctx.fillStyle=PAL.out;
+    if(side){ ctx.fillRect(x+ex,hy-2,2,2); } else { ctx.fillRect(x-3+ex,hy-2,2,2); ctx.fillRect(x+1+ex,hy-2,2,2); }
+    ctx.fillStyle='#e89a86'; ctx.fillRect(x-5,hy+1,2,2); ctx.fillRect(x+3,hy+1,2,2); }
+  if(name){ ctx.font='bold 11px "Apple SD Gothic Neo",sans-serif'; ctx.textAlign='center'; const tw=ctx.measureText(name).width+12;
+    ctx.fillStyle='#11192bcc'; rrect(x-tw/2,y-44,tw,15,7);ctx.fill(); ctx.fillStyle='#bff7d3'; ctx.fillText(name,x,y-33); ctx.textAlign='left'; } }
+const HSCALE=1.5, FEET=30;            // 시트 스케일 / 발 기준 y(타일 내)
+function drawPlayer(){ const s=toScr(player.gx,player.gy); const x=Math.round(s.x), y=Math.round(s.y);
+  const frame=player.moving?Math.floor(player.t/6)%4:0;
+  const hop=playerHop>0?Math.round(Math.sin((1-playerHop/HOPDUR)*Math.PI)*16):0;
+  if(!HERO.ready){ drawChibi(x,y,'#4a7fc8','#3a2a1a',player.dir,frame,player.moving,State.nick,hop); return; }
+  // 그림자(지면 고정)
+  ctx.save(); ctx.globalAlpha=.22; ctx.fillStyle='#1a1208'; ctx.beginPath(); ctx.ellipse(x,y+2,Math.max(5,11-hop*0.3),Math.max(2,4.4-hop*0.12),0,0,7); ctx.fill(); ctx.restore();
+  const row=HERO_ROW[player.dir]??0, flip=!!HERO_FLIP[player.dir];
+  const dw=HERO.FW*HSCALE, dh=HERO.FH*HSCALE;
+  const dx=x-dw/2, dy=y-Math.round(FEET*HSCALE)-hop;
+  const grp=row===0?'front':row===1?'side':'back', fdir=flip?-1:1;
+  const hyTop=dy+Math.round(4*HSCALE), shY=dy+Math.round(15*HSCALE);
+  const worn=Object.keys(State.owned).find(id=>State.owned[id]==='worn');
+  if(worn==='eco_cape') drawCosmetic('eco_cape',x,hyTop,shY,grp,fdir);   // 망토는 캐릭터 뒤
+  ctx.save();
+  if(flip){ ctx.translate(x,0); ctx.scale(-1,1); ctx.translate(-x,0); }
+  ctx.drawImage(heroSheet(), frame*HERO.FW, row*HERO.FH, HERO.FW, HERO.FH, dx, dy, dw, dh);
+  ctx.restore();
+  if(worn&&worn!=='eco_cape'&&worn!=='star_fx') drawCosmetic(worn,x,hyTop,shY,grp,fdir);  // 모자/관/안경/핀은 앞
+  // 이름표
+  ctx.font='bold 11px "Apple SD Gothic Neo",sans-serif'; ctx.textAlign='center'; const tw=ctx.measureText(State.nick).width+12;
+  ctx.fillStyle='#11192bcc'; rrect(x-tw/2,dy-16,tw,15,7); ctx.fill(); ctx.fillStyle='#bff7d3'; ctx.fillText(State.nick,x,dy-5); ctx.textAlign='left'; }
+// ===== 낮/밤 사이클 =====
+const DAYLEN=120000;                 // 한 사이클 2분
+function nightFactor(){ const ph=(Date.now()%DAYLEN)/DAYLEN*Math.PI*2; return Math.max(0,-Math.cos(ph)); } // 0낮~1밤
+let NF=0, lastNight=false; const nightLights=[];
+function lerpHex(a,b,t){const A=hx(a),B=hx(b);return rgb([A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t,A[2]+(B[2]-A[2])*t]);}
+
+// ===== 이펙트(파티클 / 플로팅 텍스트) =====
+const fx=[];
+function spawnSparkle(gx,gy,n,col){ for(let i=0;i<(n||8);i++) fx.push({gx,gy,ox:Math.random()*28-14,oy:-(Math.random()*8),vx:Math.random()*1.8-0.9,vy:-(1+Math.random()*1.6),life:34+Math.random()*16,t:'star',c:col||'#ffd86b',r:2+Math.round(Math.random())}); }
+function spawnText(gx,gy,txt,col){ fx.push({gx,gy,ox:0,oy:-26,vx:0,vy:-0.7,life:72,t:'txt',txt,c:col||'#ffe79a'}); }
+function updateFX(){ for(let i=fx.length-1;i>=0;i--){ const p=fx[i]; p.life--; p.ox+=p.vx; p.oy+=p.vy; if(p.vy<0)p.vy+=0.05; if(p.life<=0)fx.splice(i,1); } }
+function drawFX(){ for(const p of fx){ const s=toScr(p.gx+.5,p.gy+.5); ctx.save(); ctx.globalAlpha=Math.min(1,p.life/16);
+  if(p.t==='star'){ const x=Math.round(s.x+p.ox),y=Math.round(s.y+p.oy); ctx.fillStyle=p.c; ctx.fillRect(x-1,y-1,p.r,p.r); ctx.fillStyle='#fff'; ctx.fillRect(x,y,1,1); }
+  else { ctx.font='bold 15px "Apple SD Gothic Neo",sans-serif'; ctx.textAlign='center'; ctx.lineWidth=3; ctx.strokeStyle='#11192b'; ctx.strokeText(p.txt,s.x+p.ox,s.y+p.oy); ctx.fillStyle=p.c; ctx.fillText(p.txt,s.x+p.ox,s.y+p.oy); ctx.textAlign='left'; }
+  ctx.restore(); } }
+// 말풍선(팝 애니메이션)
+function drawBubble(sx,sy,txt){ const pop=0.7+Math.abs(Math.sin(Date.now()/260))*0.3; ctx.save(); ctx.translate(Math.round(sx),Math.round(sy)); ctx.scale(pop,pop);
+  ctx.font='bold 13px "Apple SD Gothic Neo",sans-serif'; ctx.textAlign='center'; const w=ctx.measureText(txt).width+14;
+  rrect(-w/2,-22,w,20,7); ctx.fillStyle='#fff'; ctx.fill(); ctx.strokeStyle=PAL.out; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-4,-3); ctx.lineTo(4,-3); ctx.lineTo(0,4); ctx.closePath(); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.fillStyle='#11192b'; ctx.fillText(txt,0,-8); ctx.restore(); ctx.textAlign='left'; }
+
+// ===== 점프 / 축하 연출 =====
+const HOPDUR=26; let playerHop=0; let pendingCelebrate=null;
+function hop(){ playerHop=HOPDUR; }
+function celebrate(){ hop(); spawnSparkle(player.gx,player.gy,16,'#ffd86b'); spawnSparkle(player.gx,player.gy,7,'#9bf0bb'); }
+
+// ===== 비속어 필터 =====
+const BADWORDS=['시발','씨발','씨바','시바','쉬발','ㅅㅂ','ㅄ','병신','ㅂㅅ','지랄','ㅈㄹ','개새끼','개색','개새','새끼','쌍놈','썅','좆','좇','존나','졸라','닥쳐','꺼져','엿먹','엿같','미친놈','미친년','등신','멍청이','후레','fuck','f\\*ck','shit','bitch','asshole','dick','bastard','damn'];
+const BADRE=new RegExp(BADWORDS.join('|'),'gi');
+function cleanText(s){ let hit=false; const out=s.replace(BADRE,m=>{hit=true;return '◯'.repeat([...m].length);}); return {out,hit}; }
+
+function render(){
+  NF=nightFactor();
+  drawSky(); drawGround();
+  const ents=[];
+  decor.forEach(d=>{ const f={tree:drawTree,hedge:drawHedge,bench:drawBench,lamp:drawLamp,bins:drawBins,flower:drawFlower,sign:drawSign,fountainGarden:drawFountainGarden,stadium:drawStadium}[d.t]; if(!f)return; ents.push({k:(d.t==='stadium'?-999:d.gx+d.gy+0.3), f:()=>f(d)}); });
+  sdg.forEach(d=> ents.push({k:d.gx+d.gy+0.3, f:()=>drawSDG(d)}));
+  buildings.forEach(b=> ents.push({k:(b.gx+b.w)+(b.gy+b.d), f:()=>drawBuilding(b)}));
+  npcs.forEach(n=> ents.push({k:n.gx+n.gy+0.5, f:()=>drawMascot(n)}));
+  crowd.forEach(c=> ents.push({k:c.gx+c.gy+0.4, f:()=>{const s=toScr(c.gx,c.gy);drawChibi(s.x,s.y,c.c,c.hair,c.dir||'S',Math.floor(c.t/6)%4,true);}}));
+  ents.push({k:player.gx+player.gy+0.5, f:drawPlayer});
+  ents.sort((a,b)=>a.k-b.k); ents.forEach(e=>e.f());
+  if(NF>0.02){ ctx.save(); ctx.globalAlpha=NF*0.5; ctx.fillStyle='#0e1530'; ctx.fillRect(0,0,VW(),VH()); ctx.restore(); }  // 밤 틴트
+  if(nightLights.length){ ctx.save(); ctx.globalCompositeOperation='lighter';   // 조명은 틴트 위에서 발광
+    for(const L of nightLights){ const g=ctx.createRadialGradient(L.x,L.y,1,L.x,L.y,L.r); g.addColorStop(0,'rgba(255,228,150,'+(NF*0.6)+')'); g.addColorStop(1,'rgba(255,228,150,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(L.x,L.y,L.r,0,7); ctx.fill(); }
+    ctx.restore(); } nightLights.length=0;
+  drawFX();
+  drawMini();
+}
+const miniC=document.getElementById('miniC'), mctx=miniC.getContext('2d');
+let miniBG=null;   // 정적 레이어(지면+건물) 1회 캐시
+function buildMiniBG(){ miniBG=document.createElement('canvas'); miniBG.width=172; miniBG.height=120; const m=miniBG.getContext('2d');
+  const sx=172/GW, sy=120/GH; m.fillStyle='#3a6a4a'; m.fillRect(0,0,172,120);
+  for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){ const g=ground[y][x]; if(g===0)continue; m.fillStyle=g===1?'#d8d2c4':g===2?'#e0cd9a':g===3?'#4fa6d6':g===5?'#6aa84e':'#b08858'; m.fillRect(x*sx,y*sy,sx+0.6,sy+0.6); }
+  buildings.forEach(b=>{ m.fillStyle='#9aa3b3'; m.fillRect(b.gx*sx,b.gy*sy,b.w*sx,b.d*sy); }); }
+function drawMini(){ if(!miniBG)buildMiniBG(); const sx=172/GW, sy=120/GH;
+  mctx.clearRect(0,0,172,120); mctx.drawImage(miniBG,0,0);
+  npcs.forEach(n=>{ mctx.fillStyle=n.kind==='E'?'#60a69b':n.kind==='S'?'#ef8ba5':'#f0b96f'; mctx.beginPath(); mctx.arc(n.gx*sx,n.gy*sy,2.6,0,7); mctx.fill(); });
+  mctx.fillStyle='#fff'; mctx.strokeStyle='#06281a'; mctx.lineWidth=1.5; mctx.beginPath(); mctx.arc(player.gx*sx,player.gy*sy,3.2,0,7); mctx.fill(); mctx.stroke(); }
+
+const keys={};
+addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true; if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault(); if(k===' '||k==='e')tryInteract();});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+const held={};
+document.querySelectorAll('#dpad .dbtn[data-d]').forEach(b=>{const d=b.dataset.d; const on=e=>{e.preventDefault();held[d]=true;},off=e=>{e.preventDefault();held[d]=false;};
+  b.addEventListener('touchstart',on,{passive:false});b.addEventListener('touchend',off);b.addEventListener('touchcancel',off); b.addEventListener('mousedown',on);b.addEventListener('mouseup',off);b.addEventListener('mouseleave',off);});
+document.getElementById('actBtn').addEventListener('click',e=>{e.preventDefault();tryInteract();});
+cv.addEventListener('click',e=>{ if(!running)return; const mx=e.clientX-VW()/2+cam.x, my=e.clientY-VH()/2+cam.y;
+  const gx=(mx/HW+my/HH)/2, gy=(my/HH-mx/HW)/2;
+  for(const n of npcs){ if(Math.hypot(gx-(n.gx+.5),gy-(n.gy+.5))<1.4){openNPC(n);return;} }
+  for(const b of buildings){ if(gx>b.gx&&gx<b.gx+b.w&&gy>b.gy&&gy<b.gy+b.d){openBuilding(b);return;} }
+  if(Math.hypot(gx-PLAZA.gx,gy-PLAZA.gy)<3.2) openChat(); });
+let nearTarget=null;
+function updateNear(){ let best=null,bd=1.6;
+  for(const n of npcs){ const d=Math.hypot(player.gx-(n.gx+.5),player.gy-(n.gy+.5)); if(d<bd){bd=d;best={type:'npc',obj:n};} }
+  for(const b of buildings){ const cx=b.gx+b.w/2, cy=b.gy+b.d; const d=Math.hypot(player.gx-cx,player.gy-cy); if(d<1.8&&(!best||d<bd)){best={type:'build',obj:b};bd=d;} }
+  const pc=Math.hypot(player.gx-PLAZA.gx,player.gy-PLAZA.gy); if(pc<2.6&&(!best||pc<bd)){best={type:'plaza'};bd=pc;}
+  nearTarget=best; const p=document.getElementById('prompt');
+  if(best&&running){p.style.display='block'; p.textContent=best.type==='npc'?`💬 ${best.obj.name} 만나기 (Space)`:best.type==='plaza'?'💬 소셜 광장 (Space)':`🏛️ ${best.obj.name} (Space)`;} else p.style.display='none'; }
+function tryInteract(){ if(!running||!nearTarget)return; if(nearTarget.type==='npc')openNPC(nearTarget.obj); else if(nearTarget.type==='plaza')openChat(); else openBuilding(nearTarget.obj); }
+let running=false;
+function loop(){
+  if(running){
+    let dx=0,dy=0;
+    if(keys['arrowup']||keys['w']||held.up){dx-=1;dy-=1;}
+    if(keys['arrowdown']||keys['s']||held.down){dx+=1;dy+=1;}
+    if(keys['arrowleft']||keys['a']||held.left){dx-=1;dy+=1;}
+    if(keys['arrowright']||keys['d']||held.right){dx+=1;dy-=1;}
+    player.moving=!!(dx||dy);
+    if(player.moving){ const m=Math.hypot(dx,dy)||1; dx/=m;dy/=m; player.t++;
+      const nx=player.gx+dx*player.spd*1.4, ny=player.gy+dy*player.spd*1.4;
+      if(!blocked(nx,player.gy)&&nx>0.5&&nx<GW-0.5) player.gx=nx;
+      if(!blocked(player.gx,ny)&&ny>0.5&&ny<GH-0.5) player.gy=ny;
+      const nd=dir8(dx,dy); if(nd) player.dir=nd;
+    }
+    const pc=iso(player.gx,player.gy); cam.x=pc.x; cam.y=pc.y; updateNear();
+    crowd.forEach(c=>{ c.t++; if(Math.hypot(c.gx-c.tx,c.gy-c.ty)<0.1){ c.tx=PLAZA.gx-3+Math.random()*6;c.ty=PLAZA.gy-2+Math.random()*4; } const cd=dir8(c.tx-c.gx,c.ty-c.gy); if(cd)c.dir=cd; c.gx+=(c.tx-c.gx)*0.004; c.gy+=(c.ty-c.gy)*0.004; });
+    // 마스코트 배회(가끔 집 주변을 걸어다님)
+    npcs.forEach(n=>{ if(!n.home){ n.home={gx:n.gx,gy:n.gy}; n.tx=n.gx; n.ty=n.gy; n.wt=60+Math.random()*200; n.mv=false; n.face=1; }
+      const ddx=n.tx-n.gx, ddy=n.ty-n.gy, dist=Math.hypot(ddx,ddy);
+      if(dist<0.06){ n.mv=false; if(--n.wt<=0){ n.tx=n.home.gx+(Math.random()*5-2.5); n.ty=n.home.gy+(Math.random()*5-2.5); n.wt=140+Math.random()*260; } }
+      else { const sp=0.018, nx=n.gx+ddx/dist*sp, ny=n.gy+ddy/dist*sp; let moved=false;
+        if(!blocked(nx,n.gy)&&nx>1&&nx<GW-1){ n.gx=nx; moved=true; } if(!blocked(n.gx,ny)&&ny>1&&ny<GH-1){ n.gy=ny; moved=true; }
+        n.mv=moved; if(!moved)n.wt=0; const nd=dir8(ddx,ddy); if(nd)n.dir=nd; n.wk=(n.wk||0)+1; } });
+    if(playerHop>0)playerHop--; updateFX();
+    if(State.owned['star_fx']==='worn' && Math.random()<0.14) spawnSparkle(player.gx,player.gy,2,'#bff7ff');
+    const isN=NF>0.5; if(isN!==lastNight){ lastNight=isN; toast(isN?'🌙 밤이 되었어요':'☀️ 아침이 밝았어요'); }
+  }
+  render(); requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+function startGame(){ const v=document.getElementById('nickIn').value.trim();
+  if(v){ if(v.length<2){toast('닉네임은 2자 이상이에요');return;} State.nick=v; }
+  document.getElementById('intro').classList.remove('show'); running=true; syncHUD(); save(); toast('환영합니다, '+State.nick+'님! 마스코트(!)를 찾아가세요'); }
+
+function renderQuests(){ const el=document.getElementById('qlines'); if(!el)return;
+  el.innerHTML=QUESTS.slice(0,3).map(q=>{ const done=State.doneQuests[q.id];
+    return `<div class="qline ${done?'done':''}"><span class="ck">${done?'✓':''}</span><span>${q.title} <b>+${q.pts}🌱</b></span></div>`; }).join(''); }
+function renderHotbar(){ const el=document.getElementById('hotbar'); if(!el)return;
+  const slots=[{i:'🗑️',c:State.items.trash||0},{i:'☕',c:State.items.tumbler||0}];
+  Object.keys(State.owned).forEach(id=>{const it=SHOP.find(s=>s.id===id);if(it)slots.push({i:it.icon,c:0});});
+  while(slots.length<6) slots.push({i:'',c:0});
+  el.innerHTML=slots.slice(0,7).map(s=>`<div class="slot">${s.i}${s.c?`<span class="cnt">${s.c}</span>`:''}</div>`).join(''); }
+
+const ov=document.getElementById('ov'), ovModal=document.getElementById('ovModal');
+function modal(title,html){ovModal.innerHTML=`<div class="mhead"><h2>${title}</h2><button class="x" onclick="closeOv()">×</button></div><div class="mbody">${html}</div>`;ov.classList.add('show');}
+function closeOv(){ov.classList.remove('show');
+  if(pendingCelebrate&&running){ const pc=pendingCelebrate; pendingCelebrate=null; celebrate(); spawnText(player.gx,player.gy,'+'+pc.pts+'🌱','#9bf0bb'); } }
+ov.addEventListener('click',e=>{if(e.target===ov)closeOv();});
+function openSettings(){ modal('⚙️ 메뉴',`<button class="btn" onclick="openShop()">🛍️ 캐릭터 꾸미기 상점</button>
+  <button class="btn alt" onclick="openTeam()">🎨 팀 컬러 (후디)</button>
+  <button class="btn alt" onclick="openRank()">🏆 학과 ESG 랭킹</button><button class="btn alt" onclick="openLog()">📜 보상 & 학습 내역</button>
+  <button class="btn alt" onclick="openHelp()">❓ 게임 안내</button>
+  <button class="btn ghost" onclick="if(confirm('진행상황을 초기화할까요?')){localStorage.removeItem('sce3');location.reload();}">진행 초기화</button>`); }
+function openTeam(){ let h=`<p style="color:var(--sub);font-size:13px;margin-top:0">학과/팀을 상징하는 후디 색을 골라보세요. 멀티플레이에서 팀 구분에 쓰입니다.</p><div style="display:flex;flex-wrap:wrap;gap:8px">`;
+  TEAMS.forEach(t=>{ const on=State.team===t.id; h+=`<button onclick="setTeam('${t.id}')" style="flex:1;min-width:120px;padding:10px;border-radius:12px;cursor:pointer;border:2px solid ${on?'var(--accent)':'#3a4a6a'};background:#11192b;color:var(--text);font-weight:700;display:flex;align-items:center;gap:8px">
+    <span style="width:18px;height:18px;border-radius:5px;border:1px solid #0006;background:${t.ramp[1]}"></span>${t.name}${on?' ✓':''}</button>`; });
+  h+=`</div><button class="btn ghost" onclick="openSettings()">← 메뉴</button>`; modal('🎨 팀 컬러',h); }
+function setTeam(id){ State.team=id; save(); toast('팀 컬러 변경됨'); openTeam(); }
+function openBuilding(b){ const related=QUESTS.filter(q=>q.cat===b.cat);
+  let html=`<p style="color:var(--sub);font-size:13px;margin-top:0">${b.icon} <b>${b.code}</b> · ${b.poi}</p><div class="filterbar"><button class="on" disabled>연결 미션 (${catName[b.cat]})</button></div>`;
+  related.forEach(q=>html+=questCard(q)); if(!related.length)html+='<p style="color:var(--sub)">연결된 미션이 곧 추가됩니다.</p>';
+  html+=`<button class="btn ghost" onclick="closeOv()">닫기</button>`; modal(`${b.icon} ${b.name}`,html); }
+function openNPC(n){ const qs=QUESTS.filter(q=>q.npc===n.id); const tag=n.kind==='E'?'tag-e':n.kind==='S'?'tag-s':'tag-g';
+  const line=n.kind==='E'?'지구를 지키는 작은 실천, 나랑 같이 해볼래? 🌲':n.kind==='S'?'서로 배려하는 캠퍼스, 멋지지 않아? 🌸':'고민 있으면 말해. 천천히 함께 풀어보자냥. 🐾';
+  let html=`<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px"><img src="${SPRITES[n.img]}" style="width:60px;height:72px;object-fit:contain"><div><b style="font-size:16px">${n.name}</b> <span class="npcname ${tag}">${catName[n.kind]} ${n.kind}</span><div style="font-size:12px;color:var(--sub);margin-top:4px">"${line}"</div></div></div>`;
+  qs.forEach(q=>html+=questCard(q)); modal(`${n.name}`,html); }
+function questCard(q){ const done=State.doneQuests[q.id]; const tag=q.cat==='E'?'tag-e':q.cat==='S'?'tag-s':'tag-g'; const cl={photo:'📷 사진 인증',receipt:'🧾 영수증 인증',qr:'📱 QR 스캔',none:'❓ 퀴즈'}[q.cert];
+  return `<div class="quest"><h4>${q.title} <span class="npcname ${tag}" style="font-size:10px">${catName[q.cat]}</span></h4><p>${q.desc}</p>
+    <div class="steps"><span class="step ${done?'done':'now'}">수락</span><span class="step ${done?'done':''}">수행</span><span class="step ${done?'done':''}">${cl}</span><span class="step ${done?'done':''}">보상</span></div>
+    <span class="reward">🌱 +${q.pts}</span><span class="reward">⭐ +${q.xp}xp</span>
+    ${done?`<button class="btn alt" disabled>✅ 완료됨</button>`:q.quiz?`<button class="btn" onclick="startQuiz('${q.id}')">퀴즈 시작</button>`:`<button class="btn" onclick="startCert('${q.id}')">미션 수락 & 인증하기</button>`}</div>`; }
+function startCert(qid){ hop(); spawnSparkle(player.gx,player.gy,8,'#7be0a0'); const q=QUESTS.find(x=>x.id===qid); const g={photo:{t:'사진 업로드',ex:'활동 장면이 잘 보이는 사진을 올려주세요.',emo:'📷'},receipt:{t:'영수증 이미지',ex:'텀블러 할인이 표시된 영수증을 올려주세요.',emo:'🧾'},qr:{t:'QR 코드 스캔',ex:'대학본부 1층 키오스크의 QR을 스캔하세요.',emo:'📱'}}[q.cert];
+  modal(`${g.emo} ${q.title} — 인증`,`<p style="color:var(--sub);font-size:13px;margin-top:0">${g.ex}</p><div class="dropzone" id="dz">${g.emo}<br>여기를 눌러 ${g.t} (모의)</div>
+    <p class="hint">⚠️ 프로토타입: 실제 업로드 대신 모의 인증으로 처리됩니다. 부정방지(중복/시간간격/QR 1회성 토큰)는 실서비스에서 적용됩니다.</p>
+    <button class="btn" id="submitCert">인증 제출</button><button class="btn ghost" onclick="closeOv()">취소</button>`);
+  document.getElementById('dz').onclick=()=>{const z=document.getElementById('dz');z.innerHTML='✅<br>인증 자료 첨부됨 (모의)';z.style.borderColor='var(--accent)';};
+  document.getElementById('submitCert').onclick=()=>reviewCert(q); }
+function reviewCert(q){ modal('🔎 인증 검토 중...',`<div style="text-align:center;padding:14px"><div class="trash">🔎</div><p style="color:var(--sub)">제출하신 인증을 검토하고 있어요...<br>상태: <b style="color:var(--accent2)">검토 대기</b></p></div>`); setTimeout(()=>completeQuest(q),1400); }
+function completeQuest(q){ State.doneQuests[q.id]=true; addReward(q.pts,q.xp,q.title);
+  if(q.id==='plogging')State.items.trash=(State.items.trash||0)+7; if(q.id==='tumbler')State.items.tumbler=(State.items.tumbler||0)+1;
+  State.archive.unshift({cat:q.cat,title:q.title,...q.learn}); save(); renderHotbar(); showLearnCard(q); }
+function showLearnCard(q){ modal('🎉 미션 완료!',`<div class="learncard"><div class="lk">📚 학습 카드 · ${catName[q.cat]}(${q.cat})</div><h3 style="margin:6px 0">${q.learn.k}</h3><p style="font-size:13px;line-height:1.6">💡 ${q.learn.tip}</p><p style="font-size:12px;color:var(--sub)">🔗 관련 활동: ${q.learn.link}</p></div>
+    <p style="text-align:center;margin:12px 0 4px;font-weight:800">🌱 +${q.pts} 에코포인트 · ⭐ +${q.xp} XP</p><button class="btn" onclick="closeOv()">받기</button><button class="btn ghost" onclick="openShop()">포인트로 꾸미기 🛍️</button>`); toast('🌱 +'+q.pts+' 에코포인트 획득!'); }
+let quizState=null;
+function startQuiz(qid){hop();spawnSparkle(player.gx,player.gy,8,'#7be0a0');const q=QUESTS.find(x=>x.id===qid);quizState={q,set:QUIZ[qid],i:0,correct:0};renderQuiz();}
+function renderQuiz(){const {set,i}=quizState,item=set[i];let html=`<p style="color:var(--sub);font-size:12px;margin-top:0">문항 ${i+1}/${set.length}</p><div class="quizQ">${item.q}</div>`;item.opts.forEach((o,idx)=>html+=`<button class="quizOpt" onclick="answerQuiz(${idx})">${o}</button>`);modal('❓ '+quizState.q.title,html);}
+function answerQuiz(idx){const {set,i}=quizState,item=set[i],ok=idx===item.a;if(ok)quizState.correct++;
+  modal(ok?'⭕ 정답!':'❌ 오답',`<div style="text-align:center"><div class="trash">${ok?'⭕':'❌'}</div></div><p style="font-size:13px;line-height:1.6">${item.ex}</p><button class="btn" id="qnext">${i+1<set.length?'다음 문제 ▶':'결과 보기'}</button>`);
+  document.getElementById('qnext').onclick=()=>{quizState.i++;quizState.i<set.length?renderQuiz():finishQuiz();};}
+function finishQuiz(){const q=quizState.q,c=quizState.correct,tot=quizState.set.length;const ep=Math.round(q.pts*c/tot),ex=Math.round(q.xp*c/tot);
+  if(!State.doneQuests[q.id]){State.doneQuests[q.id]=true;if(q.learn)State.archive.unshift({cat:q.cat,title:q.title,...q.learn});} addReward(ep,ex,q.title+' 퀴즈');save();
+  modal('🎉 퀴즈 완료',`<p style="text-align:center;font-size:16px"><b>${c}/${tot}</b> 정답!</p>${q.learn?`<div class="learncard"><div class="lk">📚 학습 카드</div><h3 style="margin:6px 0">${q.learn.k}</h3><p style="font-size:13px;line-height:1.6">💡 ${q.learn.tip}</p></div>`:''}<p style="text-align:center;margin:12px 0 4px;font-weight:800">🌱 +${ep} · ⭐ +${ex}xp</p><button class="btn" onclick="closeOv()">받기</button>`);}
+const RECY=[{emo:'🍶',n:'유리병',b:'유리'},{emo:'📰',n:'신문지',b:'종이'},{emo:'🥫',n:'캔',b:'캔/고철'},{emo:'🍌',n:'바나나껍질',b:'음식물'},{emo:'🧴',n:'플라스틱병',b:'플라스틱'},{emo:'📦',n:'택배상자',b:'종이'},{emo:'🍷',n:'와인병',b:'유리'},{emo:'🥤',n:'음료캔',b:'캔/고철'},{emo:'🍎',n:'사과심',b:'음식물'},{emo:'🛍️',n:'비닐봉지',b:'플라스틱'}];
+const BINS=['종이','플라스틱','유리','캔/고철','음식물']; let recyState=null,recyTimer=null;
+function startRecycle(){recyState={i:0,score:0,order:[...RECY].sort(()=>Math.random()-.5).slice(0,8),t:0};renderRecycle();tick();}
+function renderRecycle(){const r=recyState;if(!r)return;if(r.i>=r.order.length){finishRecycle();return;}const it=r.order[r.i];
+  modal('♻️ 분리수거 미니게임',`<p style="text-align:center;color:var(--sub);font-size:12px;margin-top:0">점수 ${r.score} · ${r.i+1}/${r.order.length} · ⏱️ <span id="recyT">${(10-r.t).toFixed(0)}</span>s</p>
+    <div style="text-align:center"><div class="trash">${it.emo}</div><div style="font-weight:800">${it.n}</div><p style="color:var(--sub);font-size:12px">알맞은 분리수거함을 누르세요</p>
+    <div class="bins">${BINS.map(b=>`<div class="bin" onclick="recyPick('${b}')">${b}</div>`).join('')}</div></div>`);}
+function recyPick(bin){const r=recyState,it=r.order[r.i];if(bin===it.b){r.score+=10;toast('정답! +10');}else toast('❌ '+it.n+' → '+it.b);r.i++;r.t=0;renderRecycle();}
+function tick(){if(!recyState){clearTimeout(recyTimer);return;}recyState.t+=0.1;const el=document.getElementById('recyT');if(el)el.textContent=Math.max(0,(10-recyState.t)).toFixed(0);
+  if(recyState.t>=10){recyState.i++;recyState.t=0;renderRecycle();}if(recyState)recyTimer=setTimeout(tick,100);}
+function finishRecycle(){clearTimeout(recyTimer);const sc=recyState.score,pts=Math.round(sc/2);addReward(pts,sc,'분리수거 미니게임');recyState=null;
+  modal('♻️ 결과',`<p style="text-align:center;font-size:18px"><b>${sc}점</b></p><p style="text-align:center;color:var(--sub)">🌱 +${pts} 에코포인트 · ⭐ +${sc}xp</p><div class="learncard"><div class="lk">📚 학습</div><p style="font-size:13px;margin:6px 0">올바른 분리배출은 자원순환(SDG 12)의 출발점이에요.</p></div><button class="btn" onclick="startRecycle()">한 번 더 ♻️</button><button class="btn ghost" onclick="closeOv()">닫기</button>`);}
+function startEsgMini(){quizState={q:{title:'ESG 스피드 퀴즈',pts:30,xp:30,cat:'E',id:'__esg',learn:{k:'SDGs/ESG 종합',tip:'생활 속 작은 선택이 모여 캠퍼스의 지속가능성을 만듭니다.',link:'그린순천 동아리'}},set:QUIZ.esgmini,i:0,correct:0};delete State.doneQuests['__esg'];renderQuiz();}
+function openChat(){ modal('💬 소셜 광장',`<p style="color:var(--sub);font-size:13px;margin-top:0">광장에 모인 친구들과 소통하고 미니게임도 즐겨보세요.</p><div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn alt" style="margin-top:0" onclick="startRecycle()">♻️ 분리수거</button><button class="btn alt" style="margin-top:0" onclick="startEsgMini()">❓ ESG 퀴즈</button></div><p class="hint">광장 채팅은 화면 왼쪽 아래 채팅창에서 바로 할 수 있어요. 실서비스는 실시간 멀티플레이로 구현됩니다.</p><button class="btn ghost" onclick="closeOv()">닫기</button>`);}
+const chatMsgs=[{n:'에코지기',m:'순천대 에코 캠퍼스에 오신 걸 환영해요! 🌳'},{n:'그린순천',m:'오늘 4시 정문 플로깅 모집합니다~'},{n:'User_han300',m:'태양광 패널 보러 가자!'}];
+const bot=['좋아요 같이해요!','저도 방금 텀블러 인증했어요 ☕','우리 학과 랭킹 올리자!','오 그거 꿀팁이네요 👍','지금 갈게요!','SDG 13 미션 완료!'];
+function renderChat(){const el=document.getElementById('chatlog');if(!el)return;el.innerHTML=chatMsgs.slice(-30).map(m=>`<div class="msg ${m.me?'me':''}"><b>${m.n}:</b> ${m.m}</div>`).join('');el.scrollTop=el.scrollHeight;}
+function sendChat(){const inp=document.getElementById('chatIn'),v=inp.value.trim();if(!v)return;const {out,hit}=cleanText(v);if(hit)toast('⚠️ 비속어는 사용할 수 없어요');chatMsgs.push({n:State.nick,m:out,me:true});inp.value='';renderChat();
+  setTimeout(()=>{const r=['도서관친구','채식러','자전거왕','User_han300'][Math.floor(Math.random()*4)];chatMsgs.push({n:r,m:bot[Math.floor(Math.random()*bot.length)]});renderChat();},900);}
+document.getElementById('chatIn').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat();});
+function openShop(){let html=`<p style="color:var(--sub);font-size:13px;margin-top:0">🌱 보유 <b style="color:var(--accent)">${State.pts}</b> 에코포인트로 캐릭터를 꾸며보세요.</p>`;
+  SHOP.forEach(it=>{const owned=State.owned[it.id],worn=owned==='worn';
+    html+=`<div class="shopitem"><div class="shopicon">${it.icon}</div><div style="flex:1"><b>${it.name}</b> <span class="rare r-${it.rare}">${rareName[it.rare]}</span><div style="font-size:12px;color:var(--sub)">🌱 ${it.price}</div></div>
+      ${owned?(worn?`<button class="btn alt" style="width:auto;margin:0" onclick="wear('${it.id}',false)">착용중</button>`:`<button class="btn" style="width:auto;margin:0" onclick="wear('${it.id}',true)">착용</button>`):`<button class="btn" style="width:auto;margin:0" onclick="buy('${it.id}')" ${State.pts<it.price?'disabled':''}>구매</button>`}</div>`;});
+  html+=`<button class="btn ghost" onclick="closeOv()">닫기</button>`;modal('🛍️ 캐릭터 꾸미기 상점',html);}
+function buy(id){const it=SHOP.find(s=>s.id===id);if(State.pts<it.price){toast('포인트가 부족해요');return;}State.pts-=it.price;State.owned[id]='owned';syncHUD();save();toast('🛍️ '+it.name+' 구매 완료!');openShop();}
+function wear(id,on){Object.keys(State.owned).forEach(k=>{if(State.owned[k]==='worn')State.owned[k]='owned';});State.owned[id]=on?'worn':'owned';save();toast(on?'착용했어요!':'벗었어요');openShop();}
+function openRank(){const rows=RANK_BASE.map(r=>r.dept===State.dept?{...r,p:r.p+State.pts}:r).sort((a,b)=>b.p-a.p);const max=rows[0].p||1;
+  let html=`<div class="filterbar"><button class="on">시즌</button><button onclick="toast('데모: 일/주 전환은 실서비스에서')">주간</button><button onclick="toast('데모: 일/주 전환은 실서비스에서')">일간</button></div>`;
+  rows.forEach((r,i)=>{const me=r.dept===State.dept;html+=`<div class="rankrow ${me?'me':''}"><div class="rnum">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div><div style="flex:1"><div style="font-size:13px;font-weight:700">${r.dept}${me?' (나)':''}</div><div class="rbar"><div class="rbarf" style="width:${r.p/max*100}%"></div></div></div><div style="font-weight:800;font-size:13px">${r.p.toLocaleString()}</div></div>`;});
+  html+=`<p class="hint">내 활동이 <b>${State.dept}</b> 점수에 실시간 반영됩니다.</p><button class="btn ghost" onclick="closeOv()">닫기</button>`;modal('🏆 학과 ESG 랭킹',html);}
+function openLog(){let html=`<p style="color:var(--sub);font-size:13px;margin-top:0">최근 획득 내역</p>`;
+  if(!State.log.length)html+=`<p style="color:var(--sub);text-align:center;padding:20px">아직 활동 내역이 없어요. 마스코트(!)를 찾아가세요!</p>`;
+  State.log.forEach(l=>html+=`<div class="shopitem"><div class="shopicon">🌱</div><div style="flex:1"><b>${l.reason}</b><div style="font-size:11px;color:var(--sub)">${l.t}</div></div><div style="text-align:right;font-size:12px;font-weight:800">+${l.pts}P<br><span style="color:var(--accent)">+${l.xp}xp</span></div></div>`);
+  if(State.archive.length){html+=`<h3 style="font-size:14px;margin:14px 0 8px">📚 학습 아카이브</h3>`;State.archive.slice(0,10).forEach(a=>html+=`<div class="quest" style="margin-bottom:6px"><h4 style="font-size:13px">${a.title} <span class="npcname ${a.cat==='E'?'tag-e':a.cat==='S'?'tag-s':'tag-g'}" style="font-size:9px">${catName[a.cat]}</span></h4><p style="margin:0">${a.tip}</p></div>`);}
+  html+=`<button class="btn ghost" onclick="closeOv()">닫기</button>`;modal('📜 보상 & 학습 내역',html);}
+function openHelp(){modal('❓ 게임 안내',`<p style="font-size:13px;line-height:1.7"><b>🎮 조작</b><br>PC: 방향키/WASD 이동 · Space/E 상호작용<br>모바일: 좌측 방향패드 + 상호작용 버튼<br><br><b>🌱 핵심 루프</b><br>① 마스코트(!) 찾기 → ② 퀘스트 수락 → ③ 인증(사진/QR/영수증) 또는 퀴즈 → ④ 에코포인트·경험치 → ⑤ 꾸미기 / 학과 랭킹<br><br><b>🗺️ 시설</b><br>🏛️ 대학본부(A1·G) · 📚 도서관(C1·E) · ⚙️ 공과대학(D2) · 🏫 학생회관(A4·S) · 🚪 정문(A19·광장)<br><br><b>🐾 마스코트</b><br>🌲 우송이(환경 E) · 🌸 체리니(사회 S) · 🐱 총장님(지배구조 G)</p><p class="hint">기획 검증용 프로토타입입니다. 인증·채팅·멀티플레이는 모의 동작합니다.</p><button class="btn" onclick="closeOv()">시작하기</button>`);}
+
+renderChat(); syncHUD();
+</script>
+</body>
+</html>
