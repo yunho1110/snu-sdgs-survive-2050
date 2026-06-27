@@ -23,14 +23,14 @@ const MAX_SCORE = TOTAL_STAGES * 20;                        // 200 (시나리오
    collapse   : 기온 ≥ suddenTemp 또는 생태계 0%에서 조기 종료(F등급) 적용
 */
 const DIFFS = {
-  NORMAL: { key:'NORMAL', label:'기본',      emoji:'🌍', hideHints:false, suddenTemp:4.50, topCut:0.80, surviveCut:0.50, collapse:false,
-            note:'정답 힌트 태그·SDG 뱃지·수치 변화를 모두 표시합니다.' },
-  A:      { key:'A',      label:'도전 (A)',  emoji:'🔥', hideHints:true,  suddenTemp:4.50, topCut:0.80, surviveCut:0.50, collapse:false,
-            note:'정답 힌트 태그·SDG 뱃지·수치 변화를 숨겨 정답 역산을 막습니다.' },
-  B:      { key:'B',      label:'하드코어 (B)', emoji:'☠️', hideHints:true, suddenTemp:3.00, topCut:0.85, surviveCut:0.60, collapse:true,
-            note:'힌트 숨김 + 기온 3.0°C·생태계 0% 도달 시 즉시 붕괴 + 등급 컷오프 상향.' },
+  NORMAL: { key:'NORMAL', label:'입문',      emoji:'🌱', hideHints:false, suddenTemp:4.00, topCut:0.82, surviveCut:0.52, collapse:false,
+            note:'각 선택의 힌트 태그·SDG 뱃지·수치 변화를 보여줍니다. (입문자용)' },
+  A:      { key:'A',      label:'도전 (추천)', emoji:'🔥', hideHints:true,  suddenTemp:3.60, topCut:0.85, surviveCut:0.55, collapse:false,
+            note:'힌트·뱃지·수치를 모두 가린 진짜 딜레마. 모든 보기가 장점과 숨은 대가를 가집니다.' },
+  B:      { key:'B',      label:'하드코어',  emoji:'☠️', hideHints:true, suddenTemp:3.00, topCut:0.90, surviveCut:0.60, collapse:true,
+            note:'딜레마 + 기온 3.0°C·생태계 0% 도달 시 즉시 붕괴(F) + 등급 컷오프 최상.' },
 };
-let currentDiff = 'NORMAL';
+let currentDiff = 'A';   // 기본을 「도전」으로 → 정답이 안 보이는 진짜 딜레마부터 시작
 function diffCfg(){ return DIFFS[currentDiff] || DIFFS.NORMAL; }
 function selectDiff(key){ if(DIFFS[key]){ currentDiff = key; screenIntro(); } }
 
@@ -535,6 +535,7 @@ function renderEndingCard(result){
   document.getElementById('warn').className = 'hidden';
   const root = document.getElementById('app-root');
   root.classList.remove('earthquake','glitch-red');
+  root.style.display = 'none';   // 게임 화면을 완전히 숨겨 마지막 선택이 비쳐 보이지 않게
   setSky(result.color, result.color+'55', '#05060e');
   spawnParticles((G && G.stats && G.stats.eco < 33) ? 'smog' : 'eco');
 
@@ -542,7 +543,7 @@ function renderEndingCard(result){
   const hist = (G && G.history) ? G.history : [];
   const scorePct = Math.round((s.score / MAX_SCORE) * 100);
   const d = diffCfg();
-  LAST_ENDING = { result, s:{ ...s }, scorePct };
+  LAST_ENDING = { result, s:{ ...s }, scorePct, history: hist.map(h=>({ sdg:h.sdg, step:h.step, choice:h.choice, baseScore:h.baseScore })) };
 
   // SDGs 엔딩 성적표(난이도와 무관하게 항상 SDG 뱃지 노출)
   let report = hist.map(l=>{
@@ -570,7 +571,7 @@ function renderEndingCard(result){
   const ov = document.getElementById('endingOverlay');
   ov.innerHTML = `
     <div class="w-full h-[100dvh] overflow-y-auto flex justify-center"
-         style="background:radial-gradient(120% 80% at 50% 0%, ${color}22, #05060e 70%); padding: calc(12px + var(--safe-top)) 12px calc(12px + var(--safe-bot));">
+         style="background: radial-gradient(120% 80% at 50% 0%, ${color}26, transparent 55%), #05060e; padding: calc(12px + var(--safe-top)) 12px calc(12px + var(--safe-bot));">
       <div id="shareCard" class="relative w-full max-w-[400px] my-auto flex flex-col rounded-[28px] overflow-hidden animate-pop"
            style="aspect-ratio:9/16; max-height: calc(100dvh - 24px); background:linear-gradient(180deg, #0b1020 0%, ${color}1f 52%, #05060e 100%); border:1px solid ${color}55; box-shadow:0 30px 80px -20px ${color}66, inset 0 0 90px -45px ${color};">
 
@@ -605,7 +606,7 @@ function renderEndingCard(result){
         <div class="px-5 pb-5 pt-2 shrink-0">
           <div class="text-center text-[10px] text-slate-400 mb-2">#순천대 #SDGs #지구통제실 #2050지구생존</div>
           <div class="grid grid-cols-2 gap-2">
-            <button onclick="shareResult()" class="rounded-full py-3 font-black text-xs text-slate-950 active:scale-95 transition shadow-lg" style="background:${color}">📸 결과 공유</button>
+            <button onclick="shareResult()" class="rounded-full py-3 font-black text-xs text-slate-950 active:scale-95 transition shadow-lg" style="background:${color}">📸 스토리 카드 공유</button>
             <button onclick="restartGame()" class="rounded-full py-3 font-black text-xs glass-soft border border-white/10 text-slate-200 active:scale-95 transition">🔄 다시 도전</button>
           </div>
         </div>
@@ -628,29 +629,141 @@ function miniToast(msg){
   document.body.appendChild(t);
   setTimeout(()=>t.remove(), 2800);
 }
-function shareResult(){
+/* ── 색상 유틸(카드 이미지 렌더용) ── */
+function hx(h){ h=h.replace('#',''); return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)]; }
+function hexA(hex,a){ const [r,g,b]=hx(hex); return `rgba(${r},${g},${b},${a})`; }
+function mix(h1,h2,t){ const a=hx(h1),b=hx(h2); return `rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`; }
+function lum(hex){ const [r,g,b]=hx(hex); return (0.299*r+0.587*g+0.114*b)/255; }
+function rrect(ctx,x,y,w,h,r){ r=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function wrapChars(ctx,text,maxW,maxLines){
+  const lines=[]; let line='';
+  for(const ch of String(text)){
+    const test = line+ch;
+    if(ctx.measureText(test).width>maxW && line){ lines.push(line); line=ch; if(maxLines && lines.length>=maxLines) break; }
+    else line=test;
+  }
+  if(line && (!maxLines || lines.length<maxLines)) lines.push(line);
+  if(maxLines && lines.length>maxLines) lines.length=maxLines;
+  return lines;
+}
+
+/* ── 인스타 스토리용 9:16 카드뉴스 이미지(1080×1920 PNG) 직접 렌더 ── */
+async function buildShareBlob(){
+  if(!LAST_ENDING) return null;
+  try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+  const { result, s, scorePct, history } = LAST_ENDING;
+  const color = result.color, F='"Noto Sans KR", sans-serif';
+  const W=1080, H=1920, cx=W/2, padX=72, panelW=W-2*padX;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+
+  // 배경(불투명) + 상단 후광 + 테두리
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0b1020'); bg.addColorStop(0.5,mix(color,'#05060e',0.82)); bg.addColorStop(1,'#05060e');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  const rg=ctx.createRadialGradient(cx,-120,40,cx,-120,920);
+  rg.addColorStop(0,hexA(color,0.32)); rg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=rg; ctx.fillRect(0,0,W,760);
+  ctx.strokeStyle=hexA(color,0.45); ctx.lineWidth=6; rrect(ctx,12,12,W-24,H-24,44); ctx.stroke();
+
+  ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  let y=128;
+  ctx.fillStyle='#cbd5e1'; ctx.font='700 30px '+F; ctx.fillText('SURVIVE 2050 · FINAL REPORT', cx, y); y+=46;
+  ctx.fillStyle='#94a3b8'; ctx.font='600 26px '+F; ctx.fillText('난이도 '+diffCfg().emoji+' '+diffCfg().label, cx, y); y+=64;
+
+  // 등급 원형 배지
+  const r=88, ccy=y+r;
+  ctx.beginPath(); ctx.arc(cx,ccy,r,0,Math.PI*2); ctx.fillStyle=color; ctx.fill();
+  ctx.fillStyle = lum(color)<0.55 ? '#ffffff' : '#05060e';
+  ctx.font='900 104px '+F; ctx.textBaseline='middle'; ctx.fillText(result.grade, cx, ccy+6); ctx.textBaseline='alphabetic';
+  y=ccy+r+50;
+  ctx.fillStyle=color; ctx.font='700 26px '+F; ctx.fillText('최종 등급', cx, y); y+=54;
+
+  // 엔딩 타이틀(최대 2줄)
+  ctx.fillStyle='#ffffff'; ctx.font='900 48px '+F;
+  wrapChars(ctx, result.title, W-220, 2).forEach(line=>{ ctx.fillText(line, cx, y); y+=60; });
+  y+=12;
+
+  // 설명 패널(최대 6줄)
+  ctx.font='400 30px '+F;
+  const dlines=wrapChars(ctx, result.desc, panelW-72, 6);
+  const lineH=42, panelH=dlines.length*lineH+52;
+  ctx.fillStyle='rgba(0,0,0,0.30)'; rrect(ctx,padX,y,panelW,panelH,28); ctx.fill();
+  ctx.fillStyle='#cbd5e1'; let ty=y+46; dlines.forEach(line=>{ ctx.fillText(line, cx, ty); ty+=lineH; });
+  y+=panelH+30;
+
+  // 지표 칩 2×2
+  const chips=[ ['🌡️ 평균 기온','+'+s.temp.toFixed(2)+'°C','#f87171'],
+               ['🌊 글로벌 해수면','+'+Math.round(s.sea)+'cm','#22d3ee'],
+               ['🌱 대자연 생태', Math.round(s.eco)+'%','#34d399'],
+               ['🏆 지속가능성', scorePct+'% · '+s.score+'점','#fbbf24'] ];
+  const gap=20, cw=(panelW-gap)/2, chH=112;
+  ctx.textAlign='left';
+  chips.forEach((c,i)=>{
+    const x=padX+(i%2)*(cw+gap), yy=y+Math.floor(i/2)*(chH+gap);
+    ctx.fillStyle='rgba(255,255,255,0.06)'; rrect(ctx,x,yy,cw,chH,22); ctx.fill();
+    ctx.fillStyle='#94a3b8'; ctx.font='600 25px '+F; ctx.fillText(c[0], x+26, yy+44);
+    ctx.fillStyle=c[2];     ctx.font='800 42px '+F; ctx.fillText(c[1], x+26, yy+92);
+  });
+  y+=2*chH+gap+38;
+
+  // SDGs 엔딩 성적표
+  ctx.fillStyle='#e2e8f0'; ctx.font='700 28px '+F; ctx.fillText('🎓 SDGs 엔딩 성적표', padX, y); y+=40;
+  const rows=(history||[]).slice(0,10), rowH=52;
+  rows.forEach(l=>{
+    const m=SDG[l.sdg]||{name:'SDGs',color:'#64748b'};
+    const mark=l.baseScore>=20?'🟢':(l.baseScore>=10?'🟡':'🔴');
+    ctx.fillStyle='rgba(255,255,255,0.05)'; rrect(ctx,padX,y,panelW,rowH-8,16); ctx.fill();
+    ctx.fillStyle=m.color; rrect(ctx,padX+12,y+6,32,32,8); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font='800 19px '+F; ctx.textAlign='center'; ctx.fillText(String(l.sdg), padX+28, y+28); ctx.textAlign='left';
+    ctx.fillStyle='#e2e8f0'; ctx.font='700 25px '+F;
+    let full=(l.step+1)+'단계 · '+l.choice, txt=full;
+    if(ctx.measureText(txt).width>panelW-150){ while(ctx.measureText(txt+'…').width>panelW-150 && txt.length>4) txt=txt.slice(0,-1); txt+='…'; }
+    ctx.fillText(txt, padX+58, y+32);
+    ctx.textAlign='right'; ctx.font='26px '+F; ctx.fillStyle='#fff'; ctx.fillText(mark, padX+panelW-16, y+32); ctx.textAlign='left';
+    y+=rowH;
+  });
+  if(!rows.length){ ctx.fillStyle='#94a3b8'; ctx.font='400 26px '+F; ctx.fillText('조기 종료로 기록이 부족합니다.', padX, y+30); }
+
+  // 푸터 해시태그
+  ctx.textAlign='center'; ctx.fillStyle=hexA(color,0.92); ctx.font='700 26px '+F;
+  ctx.fillText('#순천대  #SDGs  #지구통제실  #2050지구생존', cx, H-70);
+
+  return await new Promise(res=> cv.toBlob(res,'image/png',0.95));
+}
+
+/* 공유: 카드뉴스 이미지를 그대로 공유/저장(텍스트 없이 인스타 스토리에 바로 업로드) */
+async function shareResult(){
   if(!LAST_ENDING) return;
-  const { result, s, scorePct } = LAST_ENDING;
-  const text =
-    `🌍 2050 · 멸망 직전 지구에서 살아남기\n`+
-    `최종 등급 ${result.grade} — ${result.title}\n`+
-    `지속가능성 ${scorePct}점\n`+
-    `🌡️ +${s.temp.toFixed(2)}°C  🌊 +${Math.round(s.sea)}cm  🌱 ${Math.round(s.eco)}%\n`+
-    `#순천대 #SDGs #2050지구생존`;
-  if(navigator.share){
-    navigator.share({ title:'2050 지구 생존 결과', text }).catch(()=>{});
-  } else if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text)
-      .then(()=>miniToast('결과 텍스트가 복사됐어요! 스크린샷과 함께 스토리에 공유하세요 📸'))
-      .catch(()=>miniToast('화면을 스크린샷으로 저장해 공유해 주세요 📸'));
-  } else {
-    miniToast('화면을 스크린샷으로 저장해 공유해 주세요 📸');
+  const btn = document.querySelector('#shareCard button[onclick="shareResult()"]');
+  const origin = btn ? btn.textContent : '';
+  if(btn){ btn.textContent='🖼️ 카드 생성 중…'; btn.disabled=true; }
+  try{
+    const blob = await buildShareBlob();
+    if(!blob){ miniToast('이미지 생성에 실패했어요. 스크린샷으로 공유해 주세요 📸'); return; }
+    const file = new File([blob], 'survive2050.png', { type:'image/png' });
+
+    // 1순위: 파일 공유(모바일 → 인스타 스토리 등으로 바로 전송)
+    if(navigator.canShare && navigator.canShare({ files:[file] })){
+      try{ await navigator.share({ files:[file] }); return; }
+      catch(e){ if(e && e.name==='AbortError') return; }
+    }
+    // 폴백: 이미지 다운로드(저장 후 스토리에 업로드)
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='survive2050.png'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1500);
+    miniToast('결과 카드 이미지를 저장했어요! 인스타 스토리에 올려보세요 📸');
+  }catch(e){
+    miniToast('이미지 생성에 실패했어요. 스크린샷으로 공유해 주세요 📸');
+  }finally{
+    if(btn){ btn.textContent=origin; btn.disabled=false; }
   }
 }
 
 /* ═══════════════ 9. 시네마틱 인트로 + 난이도 + 업적 진열장 ═══════════════ */
 function screenIntro(){
   const stage = document.getElementById('stage');
+  document.getElementById('app-root').style.display = '';   // 엔딩에서 숨겼던 게임 화면 복원
   document.getElementById('app-root').classList.remove('earthquake','glitch-red');
   const ov = document.getElementById('endingOverlay');
   if(ov){ ov.classList.add('hidden'); ov.innerHTML=''; }
@@ -735,6 +848,7 @@ function screenIntro(){
 }
 
 function startGame(){
+  document.getElementById('app-root').style.display = '';
   G = { stats: freshStats(), history: [], currentStep: 0, gameQueue: [], modifier: null, renderingHalted: false, rollTimers: [] };
   buildQueue();
   document.getElementById('warn').className = 'hidden';
@@ -775,6 +889,7 @@ function readSave(){
 function clearSave(){ try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} }
 function loadGame(){
   const saved = readSave(); if(!saved){ startGame(); return; }
+  document.getElementById('app-root').style.display = '';
   if(saved.diff && DIFFS[saved.diff]) currentDiff = saved.diff;
   G = { currentStep: saved.currentStep, gameQueue: saved.gameQueue, stats: saved.stats,
         history: saved.history, modifier: null, renderingHalted: false, rollTimers: [] };
