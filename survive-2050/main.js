@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
    2050 · 멸망 직전 지구에서 살아남기 — main.js
-   게임 로직 + 사운드/돌발변수/업적/엔딩 매트릭스 + 저장 레이어.
+   게임 로직 + 사운드 + 돌발변수 + 업적 + 난이도 + 시나리오 풍경 아트
+   + 인스타 스토리 공유용 카드뉴스 엔딩 + 저장 레이어.
    data.js(SDG / START / SCENARIOS) 다음에 로드됩니다.
    ═══════════════════════════════════════════════════════════════ */
 
@@ -12,6 +13,87 @@ const QUEUE_PLAN = [
   { group:'final', pick:2, tier:4 },
 ];
 const TOTAL_STAGES = QUEUE_PLAN.reduce((s,p)=>s+p.pick, 0); // 10
+const MAX_SCORE = TOTAL_STAGES * 20;                        // 200 (시나리오당 최고 20점)
+
+/* ═══════════════ 난이도 시스템 (기본 / 도전 A / 하드코어 B) ═══════════════
+   hideHints  : 선택지의 정답 힌트 태그 + SDG 뱃지 숨김 + 선택 후 수치 변화 토스트 숨김
+   suddenTemp : 이 기온(°C) 이상 도달 시 즉시 붕괴 엔딩
+   topCut     : 재생(최상위 S등급) 컷오프 비율
+   surviveCut : 생존(B등급) 컷오프 비율
+   collapse   : 기온 ≥ suddenTemp 또는 생태계 0%에서 조기 종료(F등급) 적용
+*/
+const DIFFS = {
+  NORMAL: { key:'NORMAL', label:'기본',      emoji:'🌍', hideHints:false, suddenTemp:4.50, topCut:0.80, surviveCut:0.50, collapse:false,
+            note:'정답 힌트 태그·SDG 뱃지·수치 변화를 모두 표시합니다.' },
+  A:      { key:'A',      label:'도전 (A)',  emoji:'🔥', hideHints:true,  suddenTemp:4.50, topCut:0.80, surviveCut:0.50, collapse:false,
+            note:'정답 힌트 태그·SDG 뱃지·수치 변화를 숨겨 정답 역산을 막습니다.' },
+  B:      { key:'B',      label:'하드코어 (B)', emoji:'☠️', hideHints:true, suddenTemp:3.00, topCut:0.85, surviveCut:0.60, collapse:true,
+            note:'힌트 숨김 + 기온 3.0°C·생태계 0% 도달 시 즉시 붕괴 + 등급 컷오프 상향.' },
+};
+let currentDiff = 'NORMAL';
+function diffCfg(){ return DIFFS[currentDiff] || DIFFS.NORMAL; }
+function selectDiff(key){ if(DIFFS[key]){ currentDiff = key; screenIntro(); } }
+
+/* ═══════════════ 시나리오 풍경 아트 매핑(40+ 시나리오 전체) ═══════════════
+   각 항목: { motif(중앙 모티프), floats(좌우 대칭 떠다니는 아이콘),
+             top/bot(하늘 그라데이션), ring(중앙 후광색) } */
+const SCENE_ART = {
+  blackout:    { motif:'🏙️', floats:['💡','⚡','🌃'], top:'#1a1730', bot:'#3a2a4a', ring:'rgba(250,204,21,.5)' },
+  drought:     { motif:'🏜️', floats:['☀️','🌾','💨'], top:'#3a2a14', bot:'#6b4a1e', ring:'rgba(251,191,36,.5)' },
+  water:       { motif:'🚰', floats:['💧','🌊','🏞️'], top:'#0b3a4a', bot:'#155e6b', ring:'rgba(56,189,248,.5)' },
+  smog:        { motif:'🏭', floats:['😷','🌫️','🚗'], top:'#2a2a2a', bot:'#4a443a', ring:'rgba(148,163,184,.45)' },
+  waste:       { motif:'🗑️', floats:['♻️','🛢️','🚮'], top:'#2a2418', bot:'#4a3a22', ring:'rgba(191,139,46,.5)' },
+  heat:        { motif:'🌡️', floats:['☀️','🥵','🌳'], top:'#3a1414', bot:'#7a2a1e', ring:'rgba(248,113,113,.55)' },
+  plastic:     { motif:'🥤', floats:['🐢','🛍️','♻️'], top:'#0b3344', bot:'#155e6b', ring:'rgba(45,212,191,.5)' },
+  greenery:    { motif:'🌳', floats:['🦋','🌷','🏙️'], top:'#0e3a2a', bot:'#16633f', ring:'rgba(74,222,128,.55)' },
+  ocean:       { motif:'🐟', floats:['🌊','🐚','🎣'], top:'#0b2a4a', bot:'#10456b', ring:'rgba(56,189,248,.5)' },
+  awareness:   { motif:'📢', floats:['📚','🌍','✊'], top:'#1a2a4a', bot:'#2a3a6b', ring:'rgba(96,165,250,.5)' },
+  food:        { motif:'🌾', floats:['🥕','🚜','🍞'], top:'#3a2e10', bot:'#6b551e', ring:'rgba(221,166,58,.5)' },
+  wildfire:    { motif:'🔥', floats:['🌲','🚒','💨'], top:'#3a1408', bot:'#7a2e12', ring:'rgba(251,146,60,.6)' },
+  flood:       { motif:'🌧️', floats:['🌊','🏚️','☔'], top:'#0b2a44', bot:'#143f63', ring:'rgba(56,189,248,.55)' },
+  grid:        { motif:'⚡', floats:['🔌','🏭','🔋'], top:'#2a2410', bot:'#4a3e1e', ring:'rgba(250,204,21,.55)' },
+  refugee:     { motif:'🚶', floats:['🧳','🏕️','🌍'], top:'#2a2418', bot:'#4a3a28', ring:'rgba(253,157,36,.5)' },
+  carbon:      { motif:'🏭', floats:['💨','💰','🌫️'], top:'#26262a', bot:'#44403a', ring:'rgba(148,163,184,.45)' },
+  coral:       { motif:'🪸', floats:['🐠','🌊','🐢'], top:'#0b2e4a', bot:'#10567a', ring:'rgba(45,212,191,.55)' },
+  biodiversity:{ motif:'🦌', floats:['🌲','🦋','🐦'], top:'#0e3326', bot:'#165a3a', ring:'rgba(86,192,43,.55)' },
+  acid:        { motif:'🌊', floats:['🐚','🧪','🐟'], top:'#0b2a3a', bot:'#134a55', ring:'rgba(45,212,191,.5)' },
+  mineral:     { motif:'⛏️', floats:['🪨','🏔️','💎'], top:'#2a221c', bot:'#4a3a30', ring:'rgba(191,139,46,.5)' },
+  glacier:     { motif:'🧊', floats:['🌊','🐧','❄️'], top:'#0b3a4a', bot:'#1a5a7a', ring:'rgba(125,211,252,.55)' },
+  storm:       { motif:'🌀', floats:['🌊','⚡','🌬️'], top:'#10203a', bot:'#1e3a5a', ring:'rgba(96,165,250,.55)' },
+  permafrost:  { motif:'🧊', floats:['💨','🌍','❄️'], top:'#16303a', bot:'#244a55', ring:'rgba(125,211,252,.5)' },
+  geo:         { motif:'🛰️', floats:['☁️','☀️','✈️'], top:'#0a1230', bot:'#2a2a5a', ring:'rgba(167,139,250,.5)' },
+  dac:         { motif:'🏭', floats:['🌲','💨','🔬'], top:'#10302a', bot:'#1e5045', ring:'rgba(45,212,191,.5)' },
+  floatcity:   { motif:'🏝️', floats:['🌊','🏙️','⛵'], top:'#0b2e4a', bot:'#10507a', ring:'rgba(56,189,248,.55)' },
+  rainforest:  { motif:'🌴', floats:['🦜','🌿','🐸'], top:'#0e3a26', bot:'#16633a', ring:'rgba(74,222,128,.6)' },
+  fusion:      { motif:'⚛️', floats:['⚡','🔆','🔬'], top:'#1a1040', bot:'#3a2a6a', ring:'rgba(167,139,250,.55)' },
+  seed:        { motif:'🌱', floats:['🌾','🧊','🔐'], top:'#10331e', bot:'#1e5a35', ring:'rgba(86,192,43,.55)' },
+  desal:       { motif:'🏝️', floats:['🌊','💧','☀️'], top:'#0b3344', bot:'#15607a', ring:'rgba(56,189,248,.5)' },
+  circular:    { motif:'♻️', floats:['🔁','🔋','🌍'], top:'#10302a', bot:'#1e5045', ring:'rgba(45,212,191,.5)' },
+  treaty:      { motif:'🌍', floats:['🤝','🕊️','📜'], top:'#0e2a4a', bot:'#1a4a7a', ring:'rgba(96,165,250,.55)' },
+  default:     { motif:'🌍', floats:['🌱','🌊','☁️'], top:'#0b2545', bot:'#1d3461', ring:'rgba(52,211,153,.5)' },
+};
+
+/* 시나리오 풍경 아트 HTML — 떠다니는 아이콘을 「좌우 대칭」으로 하늘에 균형 배치
+   (중앙 모티프·야경 스카이라인과 겹치지 않도록 상단 코너 영역에 배치) */
+function sceneArtHTML(scene){
+  const a = SCENE_ART[scene && scene.art] || SCENE_ART.default;
+  const POS = [ { t:'12%', x:'7%' }, { t:'34%', x:'15%' }, { t:'14%', x:'31%' } ];
+  const icons = (a.floats || []).slice(0, 3);
+  let floats = '';
+  icons.forEach((ic, i)=>{
+    const p = POS[i] || POS[0];
+    const dl = (i * 0.55).toFixed(2), dr = (i * 0.55 + 0.3).toFixed(2);
+    floats += `<span class="scene-float" style="left:${p.x}; top:${p.t}; animation-delay:${dl}s">${ic}</span>`;
+    floats += `<span class="scene-float" style="right:${p.x}; top:${p.t}; animation-delay:${dr}s">${ic}</span>`;
+  });
+  return `
+    <div class="scene-art" style="--art-top:${a.top}; --art-bot:${a.bot}; --art-ring:${a.ring}">
+      <div class="scene-glow"></div>
+      ${floats}
+      <div class="scene-skyline"></div>
+      <div class="scene-motif">${a.motif}</div>
+    </div>`;
+}
 
 /* ── 게임 상태 ── */
 let G = {
@@ -24,6 +106,7 @@ let G = {
   rollTimers: [],           // 작동 중 애니메이션 프레임 추적
 };
 function freshStats(){ return { temp:START.temp, sea:START.sea, eco:START.eco, score:START.score }; }
+let LAST_ENDING = null;     // 공유용으로 직전 엔딩 결과 캐시
 
 /* ── 전역 사운드 상태(브라우저 자동재생 정책 대응: 사용자 클릭 후 가동) ── */
 let audioCtx = null, bgmInterval = null, currentOscillators = [], soundEnabled = false;
@@ -39,8 +122,8 @@ function startAmbientBGM(){
   if(bgmInterval) clearInterval(bgmInterval);
   // 생태계(eco) 상태를 주기적으로 스캔해 화음·파형을 동적으로 모핑
   bgmInterval = setInterval(()=>{
-    if(!soundEnabled || G.renderingHalted) return;
-    const eco = G.stats.eco;
+    if(!soundEnabled) return;
+    const eco = (G && G.stats) ? G.stats.eco : START.eco;
     let freqs=[130.81,164.81,196.00], type='sine', duration=2.8, gainVal=0.04; // C Major(평화)
     if(eco < 30){ freqs=[116.54,138.59,155.56,207.65]; type='sawtooth'; gainVal=0.015; duration=1.2; }   // 멸망: 불협화 톱니파
     else if(eco < 60){ freqs=[110.00,130.81,164.81,220.00]; type='triangle'; duration=2.0; }              // 경고: 어두운 마이너
@@ -50,15 +133,19 @@ function startAmbientBGM(){
 function playChordSynth(freqs, type, duration, maxGain){
   if(!audioCtx || audioCtx.state === 'suspended') return;
   const now = audioCtx.currentTime;
+  const dur = Math.max(0.06, duration);
+  const attack = Math.min(0.4, dur * 0.35);                 // 페이드 인
+  const release = Math.min(0.5, dur * 0.4);                 // 페이드 아웃
+  const sustainEnd = Math.max(now + attack, now + dur - release); // 항상 now+attack 이상(음수/역순 시간 방지)
   freqs.forEach(f=>{
     const osc = audioCtx.createOscillator(), gainNode = audioCtx.createGain();
     osc.type = type; osc.frequency.setValueAtTime(f, now);
     gainNode.gain.setValueAtTime(0, now);                                   // 클릭 노이즈 방지 페이드
-    gainNode.gain.linearRampToValueAtTime(maxGain, now + 0.4);
-    gainNode.gain.setValueAtTime(maxGain, now + duration - 0.5);
-    gainNode.gain.linearRampToValueAtTime(0, now + duration);
+    gainNode.gain.linearRampToValueAtTime(maxGain, now + attack);
+    gainNode.gain.setValueAtTime(maxGain, sustainEnd);
+    gainNode.gain.linearRampToValueAtTime(0, now + dur);
     osc.connect(gainNode); gainNode.connect(audioCtx.destination);
-    osc.start(now); osc.stop(now + duration);
+    osc.start(now); osc.stop(now + dur);
     currentOscillators.push(osc);
   });
   if(currentOscillators.length > 20) currentOscillators.splice(0, 5);
@@ -104,10 +191,10 @@ function triggerRandomEvent(){
 /* ═══════════════ 3. 라이프타임 영구 업적(Achievement) ═══════════════ */
 const ACH_META = {
   PARIS: { name:'🕊️ 파리 협정의 전설', desc:'평균 기온 상승을 +1.5°C 이하로 완벽히 방어했습니다.' },
-  BOIL:  { name:'🌋 끓어버린 지구',     desc:'기온 폭주(+4.5°C)로 인류가 강제 조기 종료되었습니다.' },
+  BOIL:  { name:'🌋 끓어버린 지구',     desc:'기온 폭주로 인류가 강제 조기 종료되었습니다.' },
   EMPTY: { name:'🍂 침묵의 봄',         desc:'생태계 건강도 0% 도달로 먹이사슬이 전멸했습니다.' },
   CYBER: { name:'🤖 프랑켄슈타인 테크',  desc:'위험한 지구공학 카드를 남발하여 생존했습니다.' },
-  COLD:  { name:'🥶 냉혈한 최고사령관',  desc:'생태 지표를 20% 미만으로 버려둔 채 문명만 보존했습니다.' },
+  COLD:  { name:'🥶 냉혈한 최고사령관',  desc:'생태 지표를 25% 미만으로 버려둔 채 문명만 보존했습니다.' },
 };
 function getBadges(){ try{ return JSON.parse(localStorage.getItem('survive2050_achievements')||'[]'); }catch(e){ return []; } }
 function unlockBadge(id){
@@ -116,7 +203,7 @@ function unlockBadge(id){
   earned.push(id);
   try{ localStorage.setItem('survive2050_achievements', JSON.stringify(earned)); }catch(e){}
   const toast = document.createElement('div');
-  toast.className = 'fixed bottom-6 right-6 z-50 glass-main ring-2 ring-amber-400 p-4 rounded-xl shadow-2xl text-white max-w-xs text-left animate-fade-in';
+  toast.className = 'fixed safe-toast z-[110] glass-main ring-2 ring-amber-400 p-4 rounded-xl shadow-2xl text-white max-w-xs text-left animate-fade-in';
   toast.innerHTML = `
     <div class="text-xs font-black text-amber-400">🏆 영구 업적 해금!</div>
     <div class="font-bold text-sm mt-0.5">${ACH_META[id].name}</div>
@@ -147,6 +234,24 @@ function updateBars(){
   if(bT) bT.style.width = clamp((s.temp/4)*100, 4, 100)+'%';
   if(bS) bS.style.width = clamp((s.sea/120)*100, 2, 100)+'%';
   if(bE) bE.style.width = clamp(s.eco, 2, 100)+'%';
+}
+
+/* ── 선택 후 수치 변화 토스트(난이도 A·B에서는 숨김 → 정답 역산 방지) ── */
+function showStatToast(dT, dS, dE){
+  if(diffCfg().hideHints) return;
+  const seg = (v, unit, invertGood) => {
+    if(Math.abs(v) < 0.005) return `<span class="text-slate-400">±0${unit}</span>`;
+    const sign = v > 0 ? '+' : '';
+    const good = invertGood ? v < 0 : v > 0;        // eco는 +가 좋음 / temp·sea는 -가 좋음
+    const col = good ? '#34d399' : '#f87171';
+    const val = unit === '°C' ? v.toFixed(2) : Math.round(v);
+    return `<span style="color:${col}">${sign}${val}${unit}</span>`;
+  };
+  const t = document.createElement('div');
+  t.className = 'fixed safe-toast z-[90] glass-main rounded-xl px-4 py-3 text-xs font-extrabold animate-pop shadow-2xl border border-white/10 flex gap-3';
+  t.innerHTML = `<span>🌡️ ${seg(dT,'°C',false)}</span><span>🌊 ${seg(dS,'cm',false)}</span><span>🌱 ${seg(dE,'%',true)}</span>`;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2200);
 }
 
 /* ── 분위기 연출: 배경 입자 + 생태계 반영 하늘색 ── */
@@ -183,11 +288,19 @@ function sample(arr, n){
   for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
   return pool.slice(0, Math.min(n, pool.length));
 }
+function shuffleInPlace(arr){
+  for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  return arr;
+}
 function buildQueue(){
   const q = [];
   QUEUE_PLAN.forEach(({group,pick,tier})=>{
     const pool = SCENARIOS[group] || [];
-    sample(pool, pick).forEach(scene=> q.push({ group, tier, scene }));
+    sample(pool, pick).forEach(scene=>{
+      // 매 판 선택지 순서를 무작위 셔플(정답이 항상 2번에 고정되던 문제 해결)
+      const choices = shuffleInPlace(scene.choices.slice());
+      q.push({ group, tier, scene:{ title:scene.title, text:scene.text, art:scene.art, choices } });
+    });
   });
   G.gameQueue = q; // early→mid→late→final 순(점진적 난이도)
 }
@@ -224,27 +337,29 @@ function choose(choiceIdx){
     sdg:c.fx.sdg, baseScore:c.fx.score, feedback:c.feedback, fact:c.fact,
   });
 
-  // 계기판 반영
+  // 계기판 반영 + 수치 변화 토스트(난이도 A·B 숨김)
   rollNum('vTemp', old.temp, G.stats.temp, 500, true);
   rollNum('vSea',  old.sea,  G.stats.sea,  500, false);
   rollNum('vEco',  old.eco,  G.stats.eco,  500, false);
   updateBars();
+  showStatToast(G.stats.temp - old.temp, G.stats.sea - old.sea, G.stats.eco - old.eco);
   if(Math.floor(old.eco/33) !== Math.floor(G.stats.eco/33)) updateSky();   // 생태 구간 바뀔 때만 하늘 갱신
 
   // 임계점 도달 시 화면 붕괴 연출
   const root = document.getElementById('app-root');
-  if(G.stats.eco < 35 || G.stats.temp >= 3.60) root.classList.add('earthquake','glitch-red');
+  if(G.stats.eco < 35 || G.stats.temp >= 3.40) root.classList.add('earthquake','glitch-red');
   else root.classList.remove('earthquake','glitch-red');
 
   // 효과음
   if(soundEnabled){
     if(c.fx.score >= 20) playChordSynth([659.25,783.99,987.77],'sine',0.25,0.05);
-    else if(c.fx.score <= 0) playChordSynth([220,174.61],'sawtooth',0.3,0.04);
+    else if(c.fx.score <= 6) playChordSynth([220,174.61],'sawtooth',0.3,0.04);
     else playChordSynth([523.25],'triangle',0.18,0.04);
   }
 
-  // 조기 강제 붕괴 검증
-  if(G.stats.eco <= 0 || G.stats.temp >= 4.50){
+  // 조기 강제 붕괴 검증(난이도별 임계 기온 적용 · B는 3.0°C)
+  const d = diffCfg();
+  if(G.stats.eco <= 0 || G.stats.temp >= d.suddenTemp){
     if(G.stats.eco <= 0) executeSuddenDeath('EMPTY');
     else executeSuddenDeath('BOIL');
     locking = false;
@@ -255,18 +370,16 @@ function choose(choiceIdx){
   saveGame();
 
   if(G.currentStep >= TOTAL_STAGES){
-    const result = getMatrixEnding(G.stats.score / MAX_SCORE);
+    const result = getEnding(G.stats.score / MAX_SCORE);
     clearSave();
-    renderMatrixCanvas('PEACE');
-    renderFinalEndingPage(result.title, result.desc, result.color);
+    renderEndingCard(result);
   } else {
     renderFeedbackPage(c);
   }
   locking = false;
 }
-const MAX_SCORE = TOTAL_STAGES * 20; // 200
 
-/* ═══════════════ 6. 엔딩 매트릭스 + 조기 강제 붕괴 ═══════════════ */
+/* ═══════════════ 6. 엔딩 등급 매트릭스 + 조기 강제 붕괴 ═══════════════ */
 function executeSuddenDeath(reasonType){
   G.renderingHalted = true;
   clearAllRollTimers();
@@ -276,122 +389,98 @@ function executeSuddenDeath(reasonType){
 
   let title, desc;
   if(reasonType === 'EMPTY'){
-    title = '🍂 배드 엔딩: 텅 빈 세계';
+    title = '🪦 배드 엔딩: 텅 빈 세계';
     desc  = '생태계 건강 지표가 결국 0%를 뚫고 파산했습니다. 벌과 미생물이 사라져 수정이 불가능해졌고 모든 식생이 고사했습니다. 인류는 지하 벙커에서 영양 배양액으로 연명하는 혹독한 디스토피아를 마주합니다.';
   } else {
-    title = '🌋 배드 엔딩: 끓어버린 지구';
-    desc  = '평균 기온 상승이 마지노선인 +4.5°C를 넘어서며 시베리아 영구동토층이 완전히 뒤집혔습니다. 기후 제어 능력을 상실한 지구는 방호복 없이 한 걸음도 걸을 수 없는 거대한 용광로가 되었습니다.';
+    title = '🪦 배드 엔딩: 끓어버린 지구';
+    desc  = `평균 기온 상승이 마지노선인 +${diffCfg().suddenTemp.toFixed(1)}°C를 넘어서며 시베리아 영구동토층이 완전히 뒤집혔습니다. 기후 제어 능력을 상실한 지구는 방호복 없이 한 걸음도 걸을 수 없는 거대한 용광로가 되었습니다.`;
   }
-  renderMatrixCanvas(reasonType);
-  renderFinalEndingPage(title, desc, '#ef4444');
+  renderEndingCard({ grade:'F', title, desc, color:'#ef4444', collapse:true });
 }
 
-function getMatrixEnding(ratio){
+/* 비율(0~1)과 최종 지표로 등급(S/A/B/C/D)을 산출. 난이도별 컷오프를 반영. */
+function getEnding(ratio){
   const s = G.stats;
+  const d = diffCfg();
   const geoCount = G.history.filter(h=> h.tag && h.tag.includes('지구공학')).length;
 
+  const top     = d.topCut;                       // S(재생) 컷오프
+  const aCut    = Math.max(top - 0.12, 0.5);      // A 컷오프
+  const survive = d.surviveCut;                    // B(생존) 컷오프
+  const cCut    = Math.max(survive - 0.20, 0.2);   // C 컷오프
+
   /* ── S 등급(매우 우수) ── */
-  if(ratio >= 0.85){
+  if(ratio >= top){
     if(s.temp <= 1.50){ unlockBadge('PARIS'); return {
-      title:'🌱 파리의 유토피아', color:'#10b981',
+      grade:'S', color:'#10b981',
+      title:'🌱 파리의 유토피아',
       desc:'기적적으로 온실가스를 포집하고 문명을 보존하여 기온 상승을 1.5°C 미만으로 묶었습니다. 자연과 인류가 진정으로 공존하는 완전한 탄소 중립 낙원이 펼쳐집니다.' }; }
     if(geoCount >= 2){ unlockBadge('CYBER'); return {
-      title:'🤖 사이버 가이아 테크노크라시', color:'#3b82f6',
+      grade:'S', color:'#3b82f6',
+      title:'🤖 사이버 가이아 테크노크라시',
       desc:'탄소는 충분히 줄이지 못했으나 성층권 차단막과 인공 장치를 상시 가동해 연명하는 통제형 인공 에덴입니다. 제어 장치가 단 1분만 멈춰도 종말이 찾아올 것입니다.' }; }
     return {
-      title:'✨ 균형 잡힌 탄소중립 도시', color:'#34d399',
+      grade:'S', color:'#34d399',
+      title:'✨ 균형 잡힌 탄소중립 도시',
       desc:'경제 성장을 훼손하지 않으면서 순환경제 100%에 가깝게 도달한, 균형 잡힌 지속가능 미래입니다.' };
   }
 
   /* ── A 등급(우수) ── */
-  if(ratio >= 0.68) return {
-    title:'🌿 녹색 성장의 표준 도시', color:'#22d3ee',
+  if(ratio >= aCut) return {
+    grade:'A', color:'#22d3ee',
+    title:'🌿 녹색 성장의 표준 도시',
     desc:'대부분의 위기에서 지구를 먼저 생각했습니다. 완전한 회복까지는 아니지만, 도시는 안정적인 궤도 위에서 천천히 더 푸르러지고 있습니다.' };
 
-  /* ── B+ 등급(회복 우세) ── */
-  if(ratio >= 0.55) return {
-    title:'🌤️ 회복의 궤도 위에서', color:'#2dd4bf',
-    desc:'좋은 선택과 미흡한 선택이 섞였지만 전체적으로 회복 쪽으로 기울었습니다. 도시는 여전히 흔들리지만 방향만큼은 옳은 쪽을 향합니다.' };
-
   /* ── B 등급(생존) — 최종 지표로 분기 ── */
-  if(ratio >= 0.40){
+  if(ratio >= survive){
     if(s.sea >= 60) return {
-      title:'🌊 워터월드: 부유식 아크 문명', color:'#06b6d4',
+      grade:'B', color:'#06b6d4',
+      title:'🌊 워터월드: 부유식 아크 문명',
       desc:'기온은 어느 정도 방어했으나 빙하 해빙 가속으로 해안 대도시가 전면 수몰됐습니다. 인류는 거대한 해상 메가 플로팅 아크를 세워 바다 위 문명을 이어갑니다.' };
     if(s.eco < 25){ unlockBadge('COLD'); return {
-      title:'🏙️ 회색 강철 돔의 문명', color:'#64748b',
+      grade:'B', color:'#64748b',
+      title:'🏙️ 회색 강철 돔의 문명',
       desc:'자연 생태계는 사실상 포기하고 모든 녹지를 인공 콘크리트와 기계 숲으로 대체한 채 살아가는, 쓸쓸하고 차가운 인공 도시입니다.' }; }
     return {
-      title:'⚖️ 아슬아슬한 평형의 평화', color:'#f59e0b',
+      grade:'B', color:'#f59e0b',
+      title:'⚖️ 아슬아슬한 평형의 평화',
       desc:'인류는 멸망하지 않았으나 매년 강타하는 슈퍼 태풍과 초대형 가뭄을 일상으로 견뎌야 하는 끈질긴 생존의 궤도에 들어섰습니다.' };
   }
 
   /* ── C 등급(위태) ── */
-  if(ratio >= 0.25) return {
-    title:'🌫️ 흔들리는 잿빛 미래', color:'#a16207',
+  if(ratio >= cCut) return {
+    grade:'C', color:'#a16207',
+    title:'🌫️ 흔들리는 잿빛 미래',
     desc:'당장의 편리함에 끌린 선택이 더 많았습니다. 도시는 아직 형태를 유지하지만 기온과 생태계 모두 위태로운 경계선 위에 서 있습니다.' };
 
   /* ── D 등급(붕괴) ── */
   return {
-    title:'🌪️ 각자도생의 뉴 다크에이지', color:'#78350f',
+    grade:'D', color:'#78350f',
+    title:'🌪️ 각자도생의 뉴 다크에이지',
     desc:'국제 공조가 파탄 나고 식량 부족으로 인한 기후 난민이 수억 명에 달합니다. 자원 부국들은 장벽을 높이고 자원 민족주의 전쟁에 돌입하는 암흑기입니다.' };
 }
 
-/* ═══════════════ 7. 엔딩 Canvas 매트릭스 스트림(모바일 최적화) ═══════════════ */
-let matrixRAF = null;
-function renderMatrixCanvas(type){
-  const canvas = document.getElementById('endingCanvas');
-  canvas.classList.remove('hidden');
-  const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-
-  const isMobile = window.innerWidth < 640;
-  const cell = isMobile ? 18 : 14;
-  const step = isMobile ? 24 : 14;
-  const columns = Math.floor(canvas.width / step);
-  const drops = Array(columns).fill(1);
-
-  let chars, fillStyleColor, textColor;
-  if(type === 'BOIL'){ chars='🌋🔥4.5°C'; fillStyleColor='rgba(239,68,68,0.06)'; textColor='#f87171'; }
-  else if(type === 'EMPTY'){ chars='🍂☠️0%';  fillStyleColor='rgba(16,185,129,0.06)'; textColor='#34d399'; }
-  else { chars='🌍🌱✓2050'; fillStyleColor='rgba(13,148,136,0.05)'; textColor='#5eead4'; }
-
-  const interval = isMobile ? 1000/38 : 1000/60;
-  let lastTime = 0;
-  if(matrixRAF) cancelAnimationFrame(matrixRAF);
-  function draw(ts){
-    if(!lastTime) lastTime = ts;
-    if(ts - lastTime > interval){
-      ctx.fillStyle = fillStyleColor; ctx.fillRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle = textColor; ctx.font = (isMobile?'11px':'14px')+' monospace';
-      for(let i=0;i<drops.length;i++){
-        const text = chars[Math.floor(Math.random()*chars.length)];
-        ctx.fillText(text, i*step, drops[i]*cell);
-        if(drops[i]*cell > canvas.height && Math.random() > 0.975) drops[i] = 0;
-        drops[i]++;
-      }
-      lastTime = ts;
-    }
-    matrixRAF = requestAnimationFrame(draw);
-  }
-  matrixRAF = requestAnimationFrame(draw);
-}
-
-/* ═══════════════ 8. 화면 렌더 ═══════════════ */
+/* ═══════════════ 7. 화면 렌더 ═══════════════ */
 function renderCurrentScenario(){
   if(G.renderingHalted) return;
   const stage = document.getElementById('stage');
   const item = G.gameQueue[G.currentStep];
   const scene = item.scene;
+  const hide = diffCfg().hideHints;
 
   const choicesHTML = scene.choices.map((c, idx)=>{
     const meta = SDG[c.fx.sdg] || { name:'SDGs', color:'#64748b' };
+    const L = String.fromCharCode(65+idx);
+    // 난이도 A·B: 정답 힌트 태그 + SDG 뱃지 숨김 / 기본: 모두 노출
+    const head = hide
+      ? `<div class="font-bold text-emerald-400 text-xs mb-0.5">[선택 ${L}]</div>`
+      : `<div class="flex items-center justify-between gap-2 mb-0.5">
+           <div class="font-bold text-emerald-400 text-xs">[선택 ${L}] ${c.tag}</div>
+           <span class="text-[10px] rounded-full px-1.5 py-0.5 font-bold shrink-0" style="background:${meta.color}22;color:${meta.color};border:1px solid ${meta.color}55">SDG ${c.fx.sdg}</span>
+         </div>`;
     return `
       <button onclick="choose(${idx})" class="w-full text-left p-3.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-emerald-400/40 text-sm font-medium transition active:scale-[0.99] text-slate-200">
-        <div class="flex items-center justify-between gap-2 mb-0.5">
-          <div class="font-bold text-emerald-400 text-xs">[선택 ${String.fromCharCode(65+idx)}] ${c.tag}</div>
-          <span class="text-[10px] rounded-full px-1.5 py-0.5 font-bold shrink-0" style="background:${meta.color}22;color:${meta.color};border:1px solid ${meta.color}55">SDG ${c.fx.sdg}</span>
-        </div>
+        ${head}
         ${c.label}
       </button>`;
   }).join('');
@@ -402,6 +491,7 @@ function renderCurrentScenario(){
 
   stage.innerHTML = `
     <div class="glass-main p-5 rounded-2xl shadow-xl animate-fade-in">
+      ${sceneArtHTML(scene)}
       <div class="flex items-center gap-1 mb-3">${seg}</div>
       <div class="flex justify-between text-xs text-slate-400 font-bold mb-2">
         <span>📋 통제 단계: ${G.currentStep+1} / ${TOTAL_STAGES}</span>
@@ -439,61 +529,131 @@ function renderFeedbackPage(choice){
   };
 }
 
-function renderFinalEndingPage(title, desc, color){
-  const stage = document.getElementById('stage');
+/* ═══════════════ 8. 인스타 스토리 공유용 카드뉴스 엔딩(9:16) ═══════════════ */
+function renderEndingCard(result){
+  if(G) G.renderingHalted = result.collapse ? true : G.renderingHalted;
   document.getElementById('warn').className = 'hidden';
-  document.getElementById('app-root').classList.remove('earthquake','glitch-red');
-  setSky(color, color+'88', '#0b1220'); spawnParticles(G.stats.eco<33?'smog':'eco');  // 엔딩 색에 맞춘 하늘
+  const root = document.getElementById('app-root');
+  root.classList.remove('earthquake','glitch-red');
+  setSky(result.color, result.color+'55', '#05060e');
+  spawnParticles((G && G.stats && G.stats.eco < 33) ? 'smog' : 'eco');
 
-  // SDGs 성적표
-  let report = '';
-  G.history.forEach((l,k)=>{
+  const s = (G && G.stats) ? G.stats : freshStats();
+  const hist = (G && G.history) ? G.history : [];
+  const scorePct = Math.round((s.score / MAX_SCORE) * 100);
+  const d = diffCfg();
+  LAST_ENDING = { result, s:{ ...s }, scorePct };
+
+  // SDGs 엔딩 성적표(난이도와 무관하게 항상 SDG 뱃지 노출)
+  let report = hist.map(l=>{
     const m = SDG[l.sdg] || { name:'SDGs', color:'#64748b', url:'#' };
-    const good = l.baseScore>=20, mid = l.baseScore>=10;
-    const mark = good?'🟢 탁월':(mid?'🟡 무난':'🔴 아쉬움');
-    report += `
-      <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-white/5 border border-white/5 text-left">
-        <div class="shrink-0 grid h-9 w-9 place-items-center rounded-lg font-black text-white text-[10px] text-center leading-tight" style="background:${m.color}">SDG<br>${l.sdg}</div>
+    const mark = l.baseScore>=20 ? '🟢' : (l.baseScore>=10 ? '🟡' : '🔴');
+    return `
+      <div class="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/5">
+        <div class="shrink-0 grid place-items-center rounded-md font-black text-white text-[9px]" style="width:30px;height:30px;background:${m.color}">${l.sdg}</div>
         <div class="min-w-0 flex-1">
-          <div class="flex items-center justify-between gap-2"><span class="text-[10px] text-slate-400">${l.step+1}단계</span><span class="text-[10px] font-bold">${mark}</span></div>
-          <div class="text-xs font-bold leading-snug truncate">${l.choice}</div>
-          <a href="${m.url}" target="_blank" rel="noopener" class="text-[10px] underline decoration-dotted hover:text-emerald-300" style="color:${m.color}">${m.name} ↗</a>
+          <div class="text-[11px] font-bold truncate text-slate-100">${l.choice}</div>
+          <div class="text-[9px] text-slate-400 truncate">${l.step+1}단계 · ${m.name}</div>
         </div>
+        <div class="shrink-0 text-sm">${mark}</div>
       </div>`;
-  });
+  }).join('');
+  if(!report) report = '<div class="text-center text-[11px] text-slate-400 py-3">조기 종료로 기록이 부족합니다.</div>';
 
-  const scorePct = Math.round(G.stats.score / MAX_SCORE * 100);
-  stage.innerHTML = `
-    <div class="glass-main p-6 rounded-2xl text-center shadow-2xl border relative z-50 animate-fade-in" style="border-color:${color}50">
-      <div class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">2050 기후 시뮬레이션 최종 보고서</div>
-      <h2 class="text-xl font-black mb-4" style="color:${color}">${title}</h2>
-      <p class="text-xs text-slate-300 leading-relaxed bg-black/40 p-3.5 rounded-xl border border-white/5 text-left mb-5">${desc}</p>
-
-      <div class="bg-slate-900/80 p-3.5 rounded-xl border border-white/5 text-xs text-left space-y-1.5 mb-5">
-        <div class="font-bold text-center text-slate-400 border-b border-white/10 pb-1.5 mb-1.5">📊 최종 지구 환경 지표</div>
-        <div class="flex justify-between"><span>🌡️ 평균 기온 변동</span><span class="font-bold text-red-400">+${G.stats.temp.toFixed(2)}°C</span></div>
-        <div class="flex justify-between"><span>🌊 글로벌 해수면</span><span class="font-bold text-cyan-400">+${G.stats.sea.toFixed(0)}cm</span></div>
-        <div class="flex justify-between"><span>🌱 대자연 생태 지표</span><span class="font-bold text-emerald-400">${G.stats.eco.toFixed(0)}%</span></div>
-        <div class="flex justify-between border-t border-white/10 pt-1.5 mt-1 font-bold"><span>지속가능성 점수</span><span class="text-amber-400">${scorePct}% (${G.stats.score}점)</span></div>
-      </div>
-
-      <div class="mb-5">
-        <div class="text-xs font-bold text-slate-300 text-left mb-2">🎓 나의 SDGs 성적표</div>
-        <div class="space-y-1.5 max-h-60 overflow-y-auto pr-1">${report}</div>
-      </div>
-
-      <button onclick="restartGame()" class="w-full rounded-full py-3 text-slate-950 font-black text-sm active:scale-95 transition shadow-lg" style="background:${color}">
-        🔄 타임 패러독스: 지구 다시 구하기
-      </button>
+  const chip = (icon,label,val,col)=>`
+    <div class="rounded-xl bg-white/5 border border-white/5 p-2.5 text-left">
+      <div class="text-[10px] text-slate-400">${icon} ${label}</div>
+      <div class="font-extrabold text-base leading-none mt-0.5" style="color:${col}">${val}</div>
     </div>`;
+
+  const color = result.color;
+  const ov = document.getElementById('endingOverlay');
+  ov.innerHTML = `
+    <div class="w-full h-[100dvh] overflow-y-auto flex justify-center"
+         style="background:radial-gradient(120% 80% at 50% 0%, ${color}22, #05060e 70%); padding: calc(12px + var(--safe-top)) 12px calc(12px + var(--safe-bot));">
+      <div id="shareCard" class="relative w-full max-w-[400px] my-auto flex flex-col rounded-[28px] overflow-hidden animate-pop"
+           style="aspect-ratio:9/16; max-height: calc(100dvh - 24px); background:linear-gradient(180deg, #0b1020 0%, ${color}1f 52%, #05060e 100%); border:1px solid ${color}55; box-shadow:0 30px 80px -20px ${color}66, inset 0 0 90px -45px ${color};">
+
+        <div class="px-5 pt-5 pb-1 text-center shrink-0">
+          <div class="font-tech text-[10px] tracking-[0.32em] text-slate-300">SURVIVE 2050 · FINAL REPORT</div>
+          <div class="mt-1 text-[10px] text-slate-400">난이도 ${d.emoji} ${d.label}</div>
+        </div>
+
+        <div class="flex flex-col items-center px-5 pt-1 shrink-0">
+          <div class="grid place-items-center rounded-full font-tech font-black"
+               style="width:92px;height:92px;color:#05060e;background:${color};box-shadow:0 0 42px ${color}aa;font-size:46px;">${result.grade}</div>
+          <div class="mt-1.5 text-[11px] font-bold tracking-wider" style="color:${color}">최종 등급</div>
+          <h2 class="mt-1.5 text-lg font-black text-white text-center leading-tight px-2">${result.title}</h2>
+        </div>
+
+        <div class="px-5 pt-2 shrink-0">
+          <p class="text-[11px] leading-relaxed text-slate-300 text-center bg-black/30 rounded-xl p-3 border border-white/5">${result.desc}</p>
+        </div>
+
+        <div class="px-5 pt-3 grid grid-cols-2 gap-2 shrink-0">
+          ${chip('🌡️','평균 기온', '+'+s.temp.toFixed(2)+'°C', '#f87171')}
+          ${chip('🌊','글로벌 해수면', '+'+Math.round(s.sea)+'cm', '#22d3ee')}
+          ${chip('🌱','대자연 생태', Math.round(s.eco)+'%', '#34d399')}
+          ${chip('🏆','지속가능성', scorePct+'% · '+s.score+'점', '#fbbf24')}
+        </div>
+
+        <div class="px-5 pt-3 pb-1 flex-1 min-h-0 flex flex-col">
+          <div class="text-[11px] font-bold text-slate-300 mb-1.5 shrink-0">🎓 SDGs 엔딩 성적표</div>
+          <div class="space-y-1.5 overflow-y-auto pr-1">${report}</div>
+        </div>
+
+        <div class="px-5 pb-5 pt-2 shrink-0">
+          <div class="text-center text-[10px] text-slate-400 mb-2">#순천대 #SDGs #지구통제실 #2050지구생존</div>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="shareResult()" class="rounded-full py-3 font-black text-xs text-slate-950 active:scale-95 transition shadow-lg" style="background:${color}">📸 결과 공유</button>
+            <button onclick="restartGame()" class="rounded-full py-3 font-black text-xs glass-soft border border-white/10 text-slate-200 active:scale-95 transition">🔄 다시 도전</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  ov.classList.remove('hidden');
+
+  if(soundEnabled){
+    if(result.grade === 'F') playChordSynth([146.83,110,82.41],'sawtooth',1.0,0.05);
+    else if(result.grade === 'S' || result.grade === 'A') playChordSynth([523.25,659.25,783.99,1046.5],'sine',0.8,0.05);
+    else playChordSynth([392,523.25],'triangle',0.6,0.04);
+  }
 }
 
-/* ═══════════════ 9. 인트로 + 업적 진열장 ═══════════════ */
+function miniToast(msg){
+  const t = document.createElement('div');
+  t.className = 'fixed left-1/2 -translate-x-1/2 z-[120] glass-main rounded-full px-4 py-2 text-xs font-bold text-white animate-pop shadow-2xl border border-white/10';
+  t.style.bottom = 'calc(22px + var(--safe-bot))';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2800);
+}
+function shareResult(){
+  if(!LAST_ENDING) return;
+  const { result, s, scorePct } = LAST_ENDING;
+  const text =
+    `🌍 2050 · 멸망 직전 지구에서 살아남기\n`+
+    `최종 등급 ${result.grade} — ${result.title}\n`+
+    `지속가능성 ${scorePct}점\n`+
+    `🌡️ +${s.temp.toFixed(2)}°C  🌊 +${Math.round(s.sea)}cm  🌱 ${Math.round(s.eco)}%\n`+
+    `#순천대 #SDGs #2050지구생존`;
+  if(navigator.share){
+    navigator.share({ title:'2050 지구 생존 결과', text }).catch(()=>{});
+  } else if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text)
+      .then(()=>miniToast('결과 텍스트가 복사됐어요! 스크린샷과 함께 스토리에 공유하세요 📸'))
+      .catch(()=>miniToast('화면을 스크린샷으로 저장해 공유해 주세요 📸'));
+  } else {
+    miniToast('화면을 스크린샷으로 저장해 공유해 주세요 📸');
+  }
+}
+
+/* ═══════════════ 9. 시네마틱 인트로 + 난이도 + 업적 진열장 ═══════════════ */
 function screenIntro(){
   const stage = document.getElementById('stage');
   document.getElementById('app-root').classList.remove('earthquake','glitch-red');
-  const canvas = document.getElementById('endingCanvas'); if(canvas) canvas.classList.add('hidden');
-  if(matrixRAF) cancelAnimationFrame(matrixRAF);
+  const ov = document.getElementById('endingOverlay');
+  if(ov){ ov.classList.add('hidden'); ov.innerHTML=''; }
 
   const earned = getBadges();
   const badgeHTML = Object.keys(ACH_META).map(key=>{
@@ -504,6 +664,25 @@ function screenIntro(){
         <div class="text-base mb-0.5">${ic}</div><div class="font-bold truncate">${nm}</div></div>`;
   }).join('');
 
+  // 난이도 선택 칩
+  const diffHTML = Object.values(DIFFS).map(dd=>{
+    const on = dd.key === currentDiff;
+    return `<button onclick="selectDiff('${dd.key}')" class="rounded-xl p-2 text-center border transition active:scale-95 ${on?'bg-emerald-500/20 border-emerald-400 text-emerald-100':'bg-white/5 border-white/10 text-slate-400'}">
+        <div class="text-base leading-none">${dd.emoji}</div>
+        <div class="text-[11px] font-bold mt-1">${dd.label}</div>
+      </button>`;
+  }).join('');
+
+  // 시네마틱 인트로 잔불(재) 입자
+  let embers = '';
+  for(let i=0;i<10;i++){
+    const l = (Math.random()*100).toFixed(1);
+    const dur = (6+Math.random()*6).toFixed(1);
+    const dl  = (-Math.random()*8).toFixed(1);
+    const sz  = (2+Math.random()*3).toFixed(0);
+    embers += `<span class="hero-ember" style="left:${l}%; width:${sz}px; height:${sz}px; animation-duration:${dur}s; animation-delay:${dl}s"></span>`;
+  }
+
   G = null; updateSky();   // 인트로는 시원한 기본 하늘 + 입자
   // 상단 지표를 시작값으로 리셋(직전 게임 잔상 제거)
   document.getElementById('vTemp').innerText = START.temp.toFixed(2);
@@ -512,19 +691,40 @@ function screenIntro(){
   document.getElementById('bTemp').style.width = clamp((START.temp/4)*100,4,100)+'%';
   document.getElementById('bSea').style.width  = clamp((START.sea/120)*100,2,100)+'%';
   document.getElementById('bEco').style.width  = clamp(START.eco,2,100)+'%';
+
   const hasSave = !!readSave();
   stage.innerHTML = `
-    <div class="glass-main p-6 rounded-2xl text-center shadow-xl animate-fade-in">
-      <div class="text-6xl floaty mb-2 drop-shadow-[0_10px_30px_rgba(16,185,129,.35)]">🌏</div>
-      <h2 class="font-display text-3xl text-white mb-1">살려야 한다, 지구</h2>
-      <p class="text-xs text-slate-400 mb-6">UN SDGs 기반 기후 통제 시뮬레이션 · 총 ${TOTAL_STAGES}단계</p>
-      <button id="startBtn" class="glow-pulse w-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black py-3.5 text-sm active:scale-95 transition shadow-xl mb-2.5">
-        ▶ 통제실 입장 (새 게임)
-      </button>
-      ${hasSave?`<button id="resumeBtn" class="w-full rounded-full glass-soft border border-white/10 text-slate-200 font-bold py-3 text-sm active:scale-95 transition mb-6">💾 이어하기</button>`:'<div class="mb-6"></div>'}
-      <div class="border-t border-white/5 pt-4">
-        <div class="text-xs font-bold text-slate-400 text-left mb-2">🏆 영구 업적 진열장 (${earned.length}/${Object.keys(ACH_META).length})</div>
-        <div class="grid grid-cols-5 gap-1.5">${badgeHTML}</div>
+    <div class="animate-fade-in">
+      <!-- 시네마틱 히어로 아트(지구·파도·도시·구름·새싹 조합 제거) -->
+      <div class="intro-hero mb-4">
+        <div class="hero-sun"></div>
+        <div class="hero-haze"></div>
+        <div class="hero-skyline"></div>
+        <div class="hero-grid"></div>
+        ${embers}
+        <div class="hero-title-wrap">
+          <div class="hero-yr">CLIMATE CONTROL · YEAR</div>
+          <div class="hero-2050">2050</div>
+          <div class="hero-kr">멸망 직전 지구에서 살아남기</div>
+        </div>
+      </div>
+
+      <div class="glass-main p-5 rounded-2xl shadow-xl">
+        <p class="text-xs text-slate-400 text-center mb-4">UN SDGs 기반 기후 통제 시뮬레이션 · 총 ${TOTAL_STAGES}단계의 결단</p>
+
+        <div class="mb-1.5 text-[11px] font-bold text-slate-300 text-left">⚙️ 난이도 선택</div>
+        <div class="grid grid-cols-3 gap-2 mb-1.5">${diffHTML}</div>
+        <p class="text-[10px] text-slate-400 leading-relaxed mb-4 min-h-[26px]">${diffCfg().note}</p>
+
+        <button id="startBtn" class="glow-pulse w-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 text-slate-950 font-black py-3.5 text-sm active:scale-95 transition shadow-xl mb-2.5">
+          ▶ 통제실 입장 (새 게임)
+        </button>
+        ${hasSave?`<button id="resumeBtn" class="w-full rounded-full glass-soft border border-white/10 text-slate-200 font-bold py-3 text-sm active:scale-95 transition mb-5">💾 이어하기</button>`:'<div class="mb-5"></div>'}
+
+        <div class="border-t border-white/5 pt-4">
+          <div class="text-xs font-bold text-slate-400 text-left mb-2">🏆 영구 업적 진열장 (${earned.length}/${Object.keys(ACH_META).length})</div>
+          <div class="grid grid-cols-5 gap-1.5">${badgeHTML}</div>
+        </div>
       </div>
     </div>`;
 
@@ -538,13 +738,14 @@ function startGame(){
   G = { stats: freshStats(), history: [], currentStep: 0, gameQueue: [], modifier: null, renderingHalted: false, rollTimers: [] };
   buildQueue();
   document.getElementById('warn').className = 'hidden';
+  document.getElementById('endingOverlay').classList.add('hidden');
   syncHUD(); saveGame();
   renderCurrentScenario();
 }
 function restartGame(){
-  G.renderingHalted = false;
-  if(matrixRAF) cancelAnimationFrame(matrixRAF);
-  document.getElementById('endingCanvas').classList.add('hidden');
+  if(G) G.renderingHalted = false;
+  const ov = document.getElementById('endingOverlay');
+  ov.classList.add('hidden'); ov.innerHTML='';
   clearSave();
   screenIntro();
 }
@@ -554,7 +755,8 @@ const STORAGE_KEY = 'survive2050_save';
 function saveGame(){
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      currentStep:G.currentStep, gameQueue:G.gameQueue, stats:G.stats, history:G.history, savedAt:Date.now(),
+      currentStep:G.currentStep, gameQueue:G.gameQueue, stats:G.stats, history:G.history,
+      diff:currentDiff, savedAt:Date.now(),
     }));
   }catch(e){}
 }
@@ -573,8 +775,10 @@ function readSave(){
 function clearSave(){ try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} }
 function loadGame(){
   const saved = readSave(); if(!saved){ startGame(); return; }
+  if(saved.diff && DIFFS[saved.diff]) currentDiff = saved.diff;
   G = { currentStep: saved.currentStep, gameQueue: saved.gameQueue, stats: saved.stats,
         history: saved.history, modifier: null, renderingHalted: false, rollTimers: [] };
+  document.getElementById('endingOverlay').classList.add('hidden');
   syncHUD();
   renderCurrentScenario();
 }
