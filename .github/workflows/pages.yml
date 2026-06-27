@@ -1,0 +1,41 @@
+name: Deploy survive-2050 to GitHub Pages
+
+# main 브랜치에 변경이 들어오면 survive-2050/ 게임을 GitHub Pages 사이트 루트로 배포합니다.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 동시 배포 1건만 유지(진행 중 배포는 취소하지 않고 완료를 보장)
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages (자동 활성화)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload artifact (survive-2050 를 사이트 루트로)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: survive-2050
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
